@@ -1,0 +1,75 @@
+name: Renovação Automática de SSL
+
+on:
+  schedule:
+    # Executa todo dia às 2:00 AM UTC (23:00 BRT)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  ssl-renewal:
+    name: Renovar Certificados SSL
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.HOSTINGER_SSH_KEY }}
+        
+    - name: Adicionar servidor ao known_hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.HOSTINGER_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Verificar certificados SSL
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           if [ -f 'ssl/cert.pem' ]; then \
+             echo 'Verificando validade do certificado...'; \
+             openssl x509 -in ssl/cert.pem -noout -dates; \
+             expiry=\$(openssl x509 -in ssl/cert.pem -noout -enddate | cut -d= -f2); \
+             expiry_epoch=\$(date -d \"\$expiry\" +%s); \
+             current_epoch=\$(date +%s); \
+             days_left=\$(( (expiry_epoch - current_epoch) / 86400 )); \
+             echo \"Dias restantes: \$days_left\"; \
+             if [ \$days_left -lt 30 ]; then \
+               echo 'Certificado expira em menos de 30 dias. Renovando...'; \
+               sudo certbot renew --quiet; \
+               sudo cp /etc/letsencrypt/live/${{ secrets.HOSTINGER_DOMAIN }}/fullchain.pem ssl/cert.pem; \
+               sudo cp /etc/letsencrypt/live/${{ secrets.HOSTINGER_DOMAIN }}/privkey.pem ssl/key.pem; \
+               sudo chown ${{ secrets.HOSTINGER_USER }}:${{ secrets.HOSTINGER_USER }} ssl/*.pem; \
+               echo 'Certificados renovados. Reiniciando containers...'; \
+               docker-compose -f docker-compose.prod.yml restart frotacontrol-app; \
+             else \
+               echo 'Certificado ainda válido por \$days_left dias.'; \
+             fi; \
+           else \
+             echo 'Certificados SSL não encontrados. Execute o deploy primeiro.'; \
+           fi"
+           
+    - name: Verificar renovação
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           if [ -f 'ssl/cert.pem' ]; then \
+             echo 'Verificando se renovação foi bem-sucedida...'; \
+             openssl x509 -in ssl/cert.pem -noout -dates; \
+             docker-compose -f docker-compose.prod.yml ps; \
+           fi"
+           
+    - name: Notificar resultado
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Renovação de SSL concluída com sucesso!"
+        else
+          echo "❌ Falha na renovação de SSL. Verifique os logs."
+        fi

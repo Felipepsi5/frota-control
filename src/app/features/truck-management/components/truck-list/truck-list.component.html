@@ -1,0 +1,182 @@
+<div class="truck-list-container">
+  <!-- Header -->
+  <div class="list-header">
+    <div class="header-content">
+      <h1>Gestão de Caminhões</h1>
+      <p>Gerencie a frota de caminhões da empresa</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="onAddTruck()">
+        <mat-icon>add</mat-icon>
+        Novo Caminhão
+      </button>
+      <button mat-icon-button (click)="refreshData()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Carregando caminhões...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <mat-icon color="warn">error</mat-icon>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="refreshData()">
+      Tentar Novamente
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <app-table-filters 
+    *ngIf="!loading && !error"
+    [config]="filterConfig"
+    (filterChange)="onFilterChange($event)">
+  </app-table-filters>
+
+             <!-- Trucks List -->
+             <mat-card *ngIf="!loading && !error" class="trucks-card">
+               <mat-card-header>
+                 <mat-card-title>
+                   <mat-icon>directions_car</mat-icon>
+                   Lista de Caminhões ({{ trucks.length }})
+                 </mat-card-title>
+               </mat-card-header>
+
+               <mat-card-content>
+                 <!-- Desktop Table View -->
+                 <div class="table-container desktop-view">
+                   <table class="trucks-table">
+                     <thead>
+                       <tr>
+                         <th>Placa</th>
+                         <th>Modelo</th>
+                         <th>Ano</th>
+                         <th>Status</th>
+                         <th>Ações</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       <tr *ngFor="let truck of trucks">
+                         <td>
+                           <mat-chip class="license-chip">{{ truck.licensePlate }}</mat-chip>
+                         </td>
+                         <td>{{ truck.model }}</td>
+                         <td>{{ truck.year }}</td>
+                         <td>
+                           <mat-chip [class]="getStatusClass(truck.status)">
+                             <mat-icon>{{ getStatusIcon(truck.status) }}</mat-icon>
+                             {{ truck.status === 'ativo' ? 'Ativo' : 'Inativo' }}
+                           </mat-chip>
+                         </td>
+                         <td>
+                           <div class="action-buttons">
+                             <button
+                               mat-icon-button
+                               color="primary"
+                               (click)="onEditTruck(truck)"
+                               title="Editar">
+                               <mat-icon>edit</mat-icon>
+                             </button>
+
+                             <button
+                               *ngIf="truck.status === 'ativo'"
+                               mat-icon-button
+                               color="warn"
+                               (click)="onDeactivateTruck(truck)"
+                               title="Desativar">
+                               <mat-icon>block</mat-icon>
+                             </button>
+
+                             <button
+                               *ngIf="truck.status === 'inativo'"
+                               mat-icon-button
+                               color="primary"
+                               (click)="onActivateTruck(truck)"
+                               title="Reativar">
+                               <mat-icon>check_circle</mat-icon>
+                             </button>
+                           </div>
+                         </td>
+                       </tr>
+                     </tbody>
+                   </table>
+                 </div>
+
+                 <!-- Mobile Card View -->
+                 <div class="mobile-cards mobile-view">
+                   <div *ngFor="let truck of trucks" class="truck-card">
+                     <div class="card-header">
+                       <div class="truck-info">
+                         <mat-chip class="license-chip">{{ truck.licensePlate }}</mat-chip>
+                         <h3>{{ truck.model }}</h3>
+                         <p class="year">{{ truck.year }}</p>
+                       </div>
+                       <mat-chip [class]="getStatusClass(truck.status)" class="status-chip">
+                         <mat-icon>{{ getStatusIcon(truck.status) }}</mat-icon>
+                         {{ truck.status === 'ativo' ? 'Ativo' : 'Inativo' }}
+                       </mat-chip>
+                     </div>
+                     
+                     <div class="card-actions">
+                       <button
+                         mat-raised-button
+                         color="primary"
+                         (click)="onEditTruck(truck)"
+                         class="action-btn">
+                         <mat-icon>edit</mat-icon>
+                         Editar
+                       </button>
+
+                       <button
+                         *ngIf="truck.status === 'ativo'"
+                         mat-raised-button
+                         color="warn"
+                         (click)="onDeactivateTruck(truck)"
+                         class="action-btn">
+                         <mat-icon>block</mat-icon>
+                         Desativar
+                       </button>
+
+                       <button
+                         *ngIf="truck.status === 'inativo'"
+                         mat-raised-button
+                         color="primary"
+                         (click)="onActivateTruck(truck)"
+                         class="action-btn">
+                         <mat-icon>check_circle</mat-icon>
+                         Reativar
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+
+                 <!-- Empty State -->
+                 <div *ngIf="trucks.length === 0" class="empty-state">
+                   <mat-icon>directions_car</mat-icon>
+                   <h3>Nenhum caminhão encontrado</h3>
+                   <p *ngIf="!currentFilters.search && !currentFilters.status">
+                     Comece cadastrando o primeiro caminhão da frota
+                   </p>
+                   <p *ngIf="currentFilters.search || currentFilters.status">
+                     Nenhum caminhão corresponde aos filtros aplicados
+                   </p>
+                   <button mat-raised-button color="primary" (click)="onAddTruck()">
+                     <mat-icon>add</mat-icon>
+                     Cadastrar Primeiro Caminhão
+                   </button>
+                 </div>
+               </mat-card-content>
+             </mat-card>
+
+  <!-- Pagination -->
+  <app-pagination 
+    *ngIf="!loading && !error && trucks.length > 0"
+    [config]="paginationConfig"
+    (pageChange)="onPageChange($event)">
+  </app-pagination>
+</div>

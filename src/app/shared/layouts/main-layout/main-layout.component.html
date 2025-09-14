@@ -1,0 +1,77 @@
+<mat-sidenav-container class="app-container">
+  <!-- Sidebar -->
+  <mat-sidenav
+    #sidenav
+    [mode]="isMobile ? 'over' : 'side'"
+    [opened]="!isMobile"
+    class="app-sidebar">
+
+    <mat-nav-list>
+      <!-- Logo/Brand -->
+      <div class="sidebar-header">
+        <mat-icon class="brand-icon">directions_car</mat-icon>
+        <span class="brand-text">FrotaControl</span>
+      </div>
+
+      <!-- Menu Items -->
+      <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>dashboard</mat-icon>
+        <span matListItemTitle>Dashboard</span>
+      </a>
+
+      <a mat-list-item routerLink="/trucks" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>directions_car</mat-icon>
+        <span matListItemTitle>Caminhões</span>
+      </a>
+
+      <a mat-list-item routerLink="/financial-entries" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
+        <span matListItemTitle>Lançamentos</span>
+      </a>
+
+      <a mat-list-item routerLink="/reports" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>assessment</mat-icon>
+        <span matListItemTitle>Relatórios</span>
+      </a>
+
+      <a mat-list-item routerLink="/settings" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>settings</mat-icon>
+        <span matListItemTitle>Configurações</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <!-- Main Content -->
+  <mat-sidenav-content class="app-content">
+    <!-- Top Navigation Bar -->
+    <mat-toolbar color="primary" class="app-toolbar">
+      <button mat-icon-button (click)="toggleSidebar()" class="menu-button">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <span class="app-title">{{ title }}</span>
+
+      <span class="spacer"></span>
+
+      <!-- User Info -->
+      <span class="user-info" *ngIf="getUserEmail()">
+        <mat-icon>person</mat-icon>
+        {{ getUserEmail() }}
+      </span>
+
+      <!-- Action Buttons -->
+      <button mat-icon-button class="action-button">
+        <mat-icon>notifications</mat-icon>
+      </button>
+
+      <button mat-icon-button class="action-button" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

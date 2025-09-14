@@ -1,0 +1,146 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Dashboard - FrotaControl</h1>
+    <button mat-raised-button color="primary" (click)="refreshData()" [disabled]="loading">
+      <mat-icon>refresh</mat-icon>
+      Atualizar
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Carregando dados do dashboard...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <mat-icon color="warn">error</mat-icon>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="refreshData()">
+      Tentar Novamente
+    </button>
+  </div>
+
+  <!-- Dashboard Content - Always Show for Testing -->
+  <div class="dashboard-content">
+    
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>directions_car</mat-icon>
+            Total de Caminhões
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="card-value">5</div>
+          <div class="card-subtitle">4 ativos</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>trending_up</mat-icon>
+            Receita Total
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="card-value positive">R$ 45.000,00</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>trending_down</mat-icon>
+            Despesas Totais
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="card-value negative">R$ 32.000,00</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>account_balance</mat-icon>
+            Lucro Líquido
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="card-value positive">R$ 13.000,00</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>local_gas_station</mat-icon>
+            Média Km/L
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="card-value">8,5</div>
+          <div class="card-subtitle">km por litro</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Trucks Performance Table -->
+    <mat-card class="performance-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>assessment</mat-icon>
+          Performance por Caminhão
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-container">
+          <table class="performance-table">
+            <thead>
+              <tr>
+                <th>Placa</th>
+                <th>Modelo</th>
+                <th>Receita</th>
+                <th>Despesas</th>
+                <th>Lucro Líquido</th>
+                <th>Km/L</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><mat-chip>ABC1234</mat-chip></td>
+                <td>Volvo FH 540</td>
+                <td class="positive">R$ 12.000,00</td>
+                <td class="negative">R$ 8.500,00</td>
+                <td class="positive">R$ 3.500,00</td>
+                <td>8,2</td>
+              </tr>
+              <tr>
+                <td><mat-chip>DEF5678</mat-chip></td>
+                <td>Scania R 450</td>
+                <td class="positive">R$ 15.000,00</td>
+                <td class="negative">R$ 10.200,00</td>
+                <td class="positive">R$ 4.800,00</td>
+                <td>9,1</td>
+              </tr>
+              <tr>
+                <td><mat-chip>GHI9012</mat-chip></td>
+                <td>Mercedes Actros</td>
+                <td class="positive">R$ 18.000,00</td>
+                <td class="negative">R$ 13.300,00</td>
+                <td class="positive">R$ 4.700,00</td>
+                <td>8,8</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

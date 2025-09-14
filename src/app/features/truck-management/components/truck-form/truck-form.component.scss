@@ -1,0 +1,134 @@
+.truck-form-container {
+  padding: 24px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.form-card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+mat-card-header {
+  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  color: white;
+  margin: -24px -24px 24px -24px;
+  padding: 24px;
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 500;
+    margin: 0;
+
+    mat-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  mat-card-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 8px;
+    font-size: 14px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  text-align: center;
+
+  p {
+    margin-top: 16px;
+    color: #666;
+    font-size: 14px;
+  }
+}
+
+.truck-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+
+  button {
+    min-width: 120px;
+    height: 44px;
+    font-weight: 500;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+
+    .button-spinner {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+  .truck-form-container {
+    padding: 16px;
+  }
+
+  mat-card-header {
+    margin: -16px -16px 16px -16px;
+    padding: 16px;
+
+    mat-card-title {
+      font-size: 20px;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 12px;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// Estilos para campos desabilitados
+mat-form-field {
+  &.mat-form-field-disabled {
+    .mat-form-field-outline {
+      opacity: 0.3;
+    }
+  }
+}
+
+// Melhorias de acessibilidade
+mat-form-field:focus-within {
+  .mat-form-field-outline-thick {
+    color: #1976d2;
+  }
+}

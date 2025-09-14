@@ -1,0 +1,387 @@
+.truck-list-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  gap: 24px;
+
+  .header-content {
+    h1 {
+      margin: 0 0 8px 0;
+      color: #1976d2;
+      font-weight: 500;
+      font-size: 28px;
+    }
+
+    p {
+      margin: 0;
+      color: #666;
+      font-size: 16px;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+
+    button {
+      height: 44px;
+      font-weight: 500;
+
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+.loading-container, .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  text-align: center;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 16px 0;
+    color: #666;
+    font-size: 16px;
+  }
+}
+
+.trucks-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+
+  mat-card-header {
+    background-color: #f5f5f5;
+    margin: -24px -24px 24px -24px;
+    padding: 24px;
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #1976d2;
+      margin: 0;
+      font-size: 20px;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+  }
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.trucks-table {
+  width: 100%;
+  min-width: 600px;
+
+  th {
+    font-weight: 600;
+    color: #333;
+    background-color: #fafafa;
+    border-bottom: 2px solid #e0e0e0;
+  }
+
+  td {
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  tr:hover {
+    background-color: #f8f9fa;
+  }
+}
+
+.license-chip {
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  background-color: #e3f2fd !important;
+  color: #1976d2 !important;
+}
+
+.status-active {
+  background-color: #e8f5e8 !important;
+  color: #2e7d32 !important;
+}
+
+.status-inactive {
+  background-color: #ffebee !important;
+  color: #c62828 !important;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  text-align: center;
+  color: #666;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 24px;
+    color: #ccc;
+  }
+
+  h3 {
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
+  }
+
+  p {
+    margin: 0 0 24px 0;
+    font-size: 16px;
+    color: #666;
+  }
+
+  button {
+    height: 44px;
+    font-weight: 500;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+  .truck-list-container {
+    padding: 16px;
+  }
+
+  .list-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+
+    .header-actions {
+      justify-content: stretch;
+
+      button {
+        flex: 1;
+      }
+    }
+  }
+
+  .trucks-card {
+    mat-card-header {
+      margin: -16px -16px 16px -16px;
+      padding: 16px;
+
+      mat-card-title {
+        font-size: 18px;
+      }
+    }
+  }
+
+  .table-container {
+    font-size: 14px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+
+    button {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .list-header {
+    .header-content {
+      h1 {
+        font-size: 24px;
+      }
+
+      p {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .empty-state {
+    padding: 32px;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+
+    p {
+      font-size: 14px;
+    }
+  }
+}
+
+// Mobile Card Layout
+.mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.truck-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+
+    .truck-info {
+      flex: 1;
+
+      h3 {
+        margin: 8px 0 4px;
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .year {
+        margin: 0;
+        font-size: 14px;
+        color: #666;
+      }
+
+      .license-chip {
+        background-color: #e3f2fd !important;
+        color: #1976d2 !important;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
+    }
+
+    .status-chip {
+      font-size: 12px;
+      height: 28px;
+
+      &.status-active {
+        background-color: #e8f5e8 !important;
+        color: #2e7d32 !important;
+
+        .mat-icon {
+          color: #2e7d32;
+          font-size: 16px;
+        }
+      }
+
+      &.status-inactive {
+        background-color: #ffebee !important;
+        color: #c62828 !important;
+
+        .mat-icon {
+          color: #c62828;
+          font-size: 16px;
+        }
+      }
+    }
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    .action-btn {
+      flex: 1;
+      min-width: 120px;
+      font-size: 13px;
+      height: 36px;
+
+      mat-icon {
+        margin-right: 4px;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+// Responsive visibility
+@media (max-width: 768px) {
+  .desktop-view {
+    display: none;
+  }
+
+  .mobile-view {
+    display: flex;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-view {
+    display: block;
+  }
+
+  .mobile-view {
+    display: none;
+  }
+}

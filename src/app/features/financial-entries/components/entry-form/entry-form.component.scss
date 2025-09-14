@@ -1,0 +1,185 @@
+.entry-form-container {
+  padding: 24px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.form-card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+mat-card-header {
+  background: linear-gradient(135deg, #4caf50 0%, #81c784 100%);
+  color: white;
+  margin: -24px -24px 24px -24px;
+  padding: 24px;
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 500;
+    margin: 0;
+
+    mat-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  mat-card-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 8px;
+    font-size: 14px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  text-align: center;
+
+  p {
+    margin-top: 16px;
+    color: #666;
+    font-size: 14px;
+  }
+}
+
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.fuel-fields {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 16px 0;
+  border-left: 4px solid #4caf50;
+
+  h3 {
+    margin: 0 0 16px 0;
+    color: #2e7d32;
+    font-size: 16px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: '⛽';
+      font-size: 18px;
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+
+  button {
+    min-width: 120px;
+    height: 44px;
+    font-weight: 500;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+
+    .button-spinner {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Estilos para campos de valor
+mat-form-field {
+  &[formControlName="amount"] {
+    .mat-form-field-outline {
+      border-color: #4caf50;
+    }
+
+    &:focus-within {
+      .mat-form-field-outline-thick {
+        color: #4caf50;
+      }
+    }
+  }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+  .entry-form-container {
+    padding: 16px;
+  }
+
+  mat-card-header {
+    margin: -16px -16px 16px -16px;
+    padding: 16px;
+
+    mat-card-title {
+      font-size: 20px;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+  }
+
+  .fuel-fields {
+    padding: 16px;
+    margin: 12px 0;
+
+    h3 {
+      font-size: 14px;
+    }
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 12px;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// Melhorias de acessibilidade
+mat-form-field:focus-within {
+  .mat-form-field-outline-thick {
+    color: #4caf50;
+  }
+}
+
+// Estilos para campos condicionais
+.fuel-fields mat-form-field {
+  .mat-form-field-outline {
+    border-color: #4caf50;
+  }
+
+  &:focus-within {
+    .mat-form-field-outline-thick {
+      color: #4caf50;
+    }
+  }
+}

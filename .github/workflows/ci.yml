@@ -1,0 +1,150 @@
+name: CI - Testes e Validação
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Job de linting e formatação
+  lint:
+    name: Linting e Formatação
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Instalar dependências
+      run: npm ci
+      
+    - name: Executar ESLint
+      run: npm run lint --if-present
+      
+    - name: Verificar formatação
+      run: npm run format:check --if-present
+
+  # Job de testes unitários
+  test:
+    name: Testes Unitários
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Instalar dependências
+      run: npm ci
+      
+    - name: Executar testes unitários
+      run: npm run test -- --watch=false --browsers=ChromeHeadless
+      
+    - name: Gerar relatório de cobertura
+      run: npm run test:coverage --if-present
+
+  # Job de build
+  build:
+    name: Build da Aplicação
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Instalar dependências
+      run: npm ci
+      
+    - name: Build de desenvolvimento
+      run: npm run build
+      
+    - name: Build de produção
+      run: npm run build -- --configuration=production
+      
+    - name: Verificar tamanho do bundle
+      run: |
+        echo "Tamanho do build de produção:"
+        du -sh dist/frotacontrol/
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: dist/
+        retention-days: 7
+
+  # Job de análise de segurança
+  security:
+    name: Análise de Segurança
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Instalar dependências
+      run: npm ci
+      
+    - name: Executar auditoria de segurança
+      run: npm audit --audit-level=moderate
+      
+    - name: Verificar dependências desatualizadas
+      run: npm outdated || true
+
+  # Job de qualidade de código
+  quality:
+    name: Qualidade de Código
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Instalar dependências
+      run: npm ci
+      
+    - name: Executar SonarCloud Scan
+      if: ${{ secrets.SONAR_TOKEN }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        npm install -g sonar-scanner
+        sonar-scanner \
+          -Dsonar.projectKey=frotacontrol \
+          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+          -Dsonar.sources=src \
+          -Dsonar.host.url=https://sonarcloud.io

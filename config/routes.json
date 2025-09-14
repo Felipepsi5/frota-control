@@ -1,0 +1,13 @@
+{
+  "/api/trucks": "/trucks",
+  "/api/trucks/:id": "/trucks/:id",
+  "/api/financial-entries": "/financialEntries",
+  "/api/financial-entries/:id": "/financialEntries/:id",
+  "/api/monthly-summaries": "/monthlySummaries",
+  "/api/monthly-summaries/:id": "/monthlySummaries/:id",
+  "/api/users": "/users",
+  "/api/users/:id": "/users/:id",
+  "/api/dashboard/summary": "/dashboard-summary",
+  "/api/trucks/:id/financial-entries": "/financialEntries?truckId=:id",
+  "/api/trucks/:id/monthly-summary": "/monthlySummaries?truckId=:id"
+}

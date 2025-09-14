@@ -1,0 +1,214 @@
+name: Deploy para Hostinger
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  # Job de teste e validação
+  test:
+    name: Testes e Validação
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Instalar dependências
+      run: npm ci
+      
+    - name: Executar linting
+      run: npm run lint --if-present
+      
+    - name: Executar testes
+      run: npm run test --if-present
+      
+    - name: Build de teste
+      run: npm run build
+
+  # Job de build e deploy
+  deploy:
+    name: Deploy para Hostinger
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Instalar dependências
+      run: npm ci
+      
+    - name: Build da aplicação
+      run: npm run build -- --configuration=production
+      
+    - name: Configurar Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login no Docker Hub (opcional)
+      if: ${{ secrets.DOCKER_USERNAME }}
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Build da imagem Docker
+      run: |
+        docker build -t frotacontrol:latest \
+          --build-arg NODE_ENV=production \
+          --target production .
+          
+    - name: Salvar imagem Docker
+      run: |
+        docker save frotacontrol:latest | gzip > frotacontrol-image.tar.gz
+        
+    - name: Configurar SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.HOSTINGER_SSH_KEY }}
+        
+    - name: Adicionar servidor ao known_hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.HOSTINGER_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Criar diretório de deploy no servidor
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "mkdir -p ${{ secrets.HOSTINGER_DEPLOY_PATH }}/backups"
+          
+    - name: Fazer backup da versão atual
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           if [ -d 'dist' ]; then \
+             tar -czf backups/backup_$(date +%Y%m%d_%H%M%S).tar.gz dist/ ssl/ logs/ 2>/dev/null || true; \
+           fi"
+           
+    - name: Parar containers existentes
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           docker-compose -f docker-compose.prod.yml down || true"
+           
+    - name: Enviar arquivos para o servidor
+      run: |
+        # Enviar código fonte
+        rsync -avz --delete \
+          --exclude='.git' \
+          --exclude='node_modules' \
+          --exclude='dist' \
+          --exclude='.github' \
+          --exclude='*.log' \
+          ./ ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_DEPLOY_PATH }}/
+          
+        # Enviar imagem Docker
+        scp frotacontrol-image.tar.gz \
+          ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_DEPLOY_PATH }}/
+          
+    - name: Carregar imagem Docker no servidor
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           docker load < frotacontrol-image.tar.gz && \
+           rm frotacontrol-image.tar.gz"
+           
+    - name: Configurar SSL (Let's Encrypt)
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           if [ ! -f 'ssl/cert.pem' ] || [ ! -f 'ssl/key.pem' ]; then \
+             echo 'Configurando SSL...'; \
+             mkdir -p ssl; \
+             if command -v certbot >/dev/null 2>&1; then \
+               sudo certbot certonly --standalone -d ${{ secrets.HOSTINGER_DOMAIN }} --non-interactive --agree-tos --email ${{ secrets.HOSTINGER_EMAIL }} || true; \
+               sudo cp /etc/letsencrypt/live/${{ secrets.HOSTINGER_DOMAIN }}/fullchain.pem ssl/cert.pem 2>/dev/null || true; \
+               sudo cp /etc/letsencrypt/live/${{ secrets.HOSTINGER_DOMAIN }}/privkey.pem ssl/key.pem 2>/dev/null || true; \
+               sudo chown ${{ secrets.HOSTINGER_USER }}:${{ secrets.HOSTINGER_USER }} ssl/*.pem 2>/dev/null || true; \
+             else \
+               echo 'Certbot não encontrado. Configure SSL manualmente.'; \
+             fi; \
+           fi"
+           
+    - name: Configurar ambiente de produção
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           if [ ! -f '.env' ]; then \
+             cat > .env << 'EOF'
+        NODE_ENV=production
+        API_PORT=3000
+        APP_PORT=80
+        HTTPS_PORT=443
+        API_HOST=localhost
+        API_PROTOCOL=https
+        SSL_CERT_PATH=./ssl/cert.pem
+        SSL_KEY_PATH=./ssl/key.pem
+        LOG_LEVEL=info
+        LOG_FORMAT=combined
+        EOF
+           fi"
+           
+    - name: Iniciar aplicação
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           docker-compose -f docker-compose.prod.yml up -d"
+           
+    - name: Aguardar aplicação inicializar
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           sleep 30 && \
+           docker-compose -f docker-compose.prod.yml ps"
+           
+    - name: Verificar saúde da aplicação
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "cd ${{ secrets.HOSTINGER_DEPLOY_PATH }} && \
+           for i in {1..10}; do \
+             if curl -f -s http://localhost > /dev/null 2>&1; then \
+               echo 'Aplicação está respondendo'; \
+               break; \
+             fi; \
+             echo 'Tentativa \$i/10 - Aguardando aplicação...'; \
+             sleep 10; \
+           done"
+           
+    - name: Limpar imagens antigas
+      run: |
+        ssh ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
+          "docker image prune -f && \
+           docker system prune -f"
+           
+    - name: Notificar sucesso
+      if: success()
+      run: |
+        echo "✅ Deploy concluído com sucesso!"
+        echo "🌐 Aplicação disponível em: https://${{ secrets.HOSTINGER_DOMAIN }}"
+        
+    - name: Notificar falha
+      if: failure()
+      run: |
+        echo "❌ Deploy falhou!"
+        echo "📋 Verifique os logs para mais detalhes"
