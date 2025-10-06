@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, Inject, PLATFORM_ID, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
@@ -7,9 +7,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatMenuModule } from '@angular/material/menu';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { JwtAuthService } from '../../../core/services/jwt-auth.service';
+import { User } from '../../../domain/models/user.model';
 
 @Component({
   selector: 'app-main-layout',
@@ -23,7 +26,8 @@ import { takeUntil } from 'rxjs/operators';
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
-    MatListModule
+    MatListModule,
+    MatMenuModule
   ],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
@@ -33,7 +37,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   title = 'FrotaControl';
   isMobile = false;
+  currentUser: User | null = null;
   private destroy$ = new Subject<void>();
+  private jwtAuthService = inject(JwtAuthService);
 
   constructor(
     private breakpointObserver: BreakpointObserver,
@@ -43,14 +49,18 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Verificar se o usuário está logado (apenas no browser)
-    if (isPlatformBrowser(this.platformId)) {
-      const isLoggedIn = localStorage.getItem('isLoggedIn');
-      if (!isLoggedIn) {
-        this.router.navigate(['/login']);
-        return;
-      }
-    }
+    // Observar mudanças no usuário atual
+    this.jwtAuthService.getCurrentUser()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        this.currentUser = user;
+        
+        // Se não há usuário logado, redirecionar para login
+        if (!user) {
+          this.router.navigate(['/login']);
+          return;
+        }
+      });
 
     // Observar mudanças no tamanho da tela
     this.breakpointObserver
@@ -78,27 +88,34 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.sidenav.toggle();
   }
 
-  getUserEmail(): string | null {
-    if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem('userEmail');
+  getUserDisplayName(): string {
+    if (this.currentUser) {
+      return this.currentUser.displayName || this.currentUser.email;
     }
-    return null;
+    return '';
   }
 
-  logout(): void {
-    // Clear login state (apenas no browser)
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userEmail');
+  isAdmin(): boolean {
+    return this.currentUser?.role === 'admin' || false;
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await this.jwtAuthService.logout().toPromise();
+      
+      this.snackBar.open('Logout realizado com sucesso!', 'Fechar', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top',
+        panelClass: ['success-snackbar']
+      });
+      
+      this.router.navigate(['/login']);
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      
+      // Mesmo se der erro, redirecionar para login
+      this.router.navigate(['/login']);
     }
-    
-    this.snackBar.open('Logout realizado com sucesso!', 'Fechar', {
-      duration: 3000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-      panelClass: ['success-snackbar']
-    });
-    
-    this.router.navigate(['/login']);
   }
 }

@@ -23,11 +23,11 @@
     </button>
   </div>
 
-  <!-- Dashboard Content - Always Show for Testing -->
-  <div class="dashboard-content">
+  <!-- Dashboard Content -->
+  <div class="dashboard-content" *ngIf="!loading && !error">
     
     <!-- Summary Cards -->
-    <div class="summary-cards">
+    <div class="summary-cards" *ngIf="dashboardSummary">
       <mat-card class="summary-card">
         <mat-card-header>
           <mat-card-title>
@@ -36,8 +36,8 @@
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="card-value">5</div>
-          <div class="card-subtitle">4 ativos</div>
+          <div class="card-value">{{ dashboardSummary.totalTrucks }}</div>
+          <div class="card-subtitle">{{ dashboardSummary.activeTrucks }} ativos</div>
         </mat-card-content>
       </mat-card>
 
@@ -49,7 +49,8 @@
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="card-value positive">R$ 45.000,00</div>
+          <div class="card-value positive">{{ formatCurrency(dashboardSummary.totalRevenue) }}</div>
+          <div class="card-subtitle">{{ dashboardSummary.totalEntries }} lançamentos</div>
         </mat-card-content>
       </mat-card>
 
@@ -61,7 +62,7 @@
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="card-value negative">R$ 32.000,00</div>
+          <div class="card-value negative">{{ formatCurrency(dashboardSummary.totalExpenses) }}</div>
         </mat-card-content>
       </mat-card>
 
@@ -73,7 +74,10 @@
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="card-value positive">R$ 13.000,00</div>
+          <div class="card-value" [class]="getNetIncomeClass(dashboardSummary.netIncome)">
+            {{ formatCurrency(dashboardSummary.netIncome) }}
+          </div>
+          <div class="card-subtitle">{{ formatNumber(dashboardSummary.profitMargin) }}% margem</div>
         </mat-card-content>
       </mat-card>
 
@@ -85,8 +89,21 @@
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="card-value">8,5</div>
+          <div class="card-value">{{ formatNumber(dashboardSummary.averageFuelEfficiency) }}</div>
           <div class="card-subtitle">km por litro</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>attach_money</mat-icon>
+            Valor Médio
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="card-value">{{ formatCurrency(dashboardSummary.averageEntryValue) }}</div>
+          <div class="card-subtitle">por lançamento</div>
         </mat-card-content>
       </mat-card>
     </div>
@@ -97,10 +114,11 @@
         <mat-card-title>
           <mat-icon>assessment</mat-icon>
           Performance por Caminhão
+          <span class="subtitle">(Últimos 30 dias)</span>
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div class="table-container">
+        <div class="table-container" *ngIf="trucksPerformance.length > 0">
           <table class="performance-table">
             <thead>
               <tr>
@@ -109,36 +127,32 @@
                 <th>Receita</th>
                 <th>Despesas</th>
                 <th>Lucro Líquido</th>
+                <th>Margem</th>
                 <th>Km/L</th>
+                <th>Lançamentos</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td><mat-chip>ABC1234</mat-chip></td>
-                <td>Volvo FH 540</td>
-                <td class="positive">R$ 12.000,00</td>
-                <td class="negative">R$ 8.500,00</td>
-                <td class="positive">R$ 3.500,00</td>
-                <td>8,2</td>
-              </tr>
-              <tr>
-                <td><mat-chip>DEF5678</mat-chip></td>
-                <td>Scania R 450</td>
-                <td class="positive">R$ 15.000,00</td>
-                <td class="negative">R$ 10.200,00</td>
-                <td class="positive">R$ 4.800,00</td>
-                <td>9,1</td>
-              </tr>
-              <tr>
-                <td><mat-chip>GHI9012</mat-chip></td>
-                <td>Mercedes Actros</td>
-                <td class="positive">R$ 18.000,00</td>
-                <td class="negative">R$ 13.300,00</td>
-                <td class="positive">R$ 4.700,00</td>
-                <td>8,8</td>
+              <tr *ngFor="let truck of trucksPerformance">
+                <td><mat-chip>{{ truck.licensePlate }}</mat-chip></td>
+                <td>{{ truck.model }} ({{ truck.year }})</td>
+                <td class="positive">{{ formatCurrency(truck.totalRevenue) }}</td>
+                <td class="negative">{{ formatCurrency(truck.totalExpenses) }}</td>
+                <td [class]="getNetIncomeClass(truck.netIncome)">
+                  {{ formatCurrency(truck.netIncome) }}
+                </td>
+                <td>{{ formatNumber(truck.profitMargin) }}%</td>
+                <td>{{ formatNumber(truck.fuelEfficiency) }}</td>
+                <td>{{ truck.entryCount }}</td>
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="trucksPerformance.length === 0">
+          <mat-icon>directions_car</mat-icon>
+          <p>Nenhum dado de performance encontrado para os últimos 30 dias</p>
         </div>
       </mat-card-content>
     </mat-card>

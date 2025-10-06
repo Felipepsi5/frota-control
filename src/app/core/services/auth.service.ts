@@ -78,7 +78,7 @@ export class AuthService {
    */
   getCurrentUserId(): Observable<string | null> {
     return this.currentUser$.pipe(
-      map(user => user?.uid || null)
+      map(user => user?.id || null)
     );
   }
 
@@ -101,12 +101,13 @@ export class AuthService {
     const role = (firebaseUser as any).customClaims?.role || 'user';
     
     return {
-      uid: firebaseUser.uid,
+      id: firebaseUser.uid,
       email: firebaseUser.email || '',
       displayName: firebaseUser.displayName || undefined,
       role: role as 'admin' | 'user',
       createdAt: new Date(firebaseUser.metadata.creationTime || ''),
-      lastLoginAt: new Date(firebaseUser.metadata.lastSignInTime || '')
+      lastLoginAt: new Date(firebaseUser.metadata.lastSignInTime || ''),
+      updatedAt: new Date() // Adicionado campo obrigatório
     };
   }
 

@@ -1,0 +1,9 @@
+<mat-chip-set>
+  <mat-chip 
+    [class]="getChipClass()"
+    [matTooltip]="getTooltip()"
+    matTooltipPosition="above">
+    <mat-icon *ngIf="showIcon" class="chip-icon">{{ getIcon() }}</mat-icon>
+    {{ categoryName }}
+  </mat-chip>
+</mat-chip-set>

@@ -1,6 +1,6 @@
 # FrotaControl - Sistema de Gestão de Frota
 
-Sistema web para gestão de despesas, receitas e performance de frota de caminhões, desenvolvido com Angular 19 e Firebase.
+Sistema web para gestão de despesas, receitas e performance de frota de caminhões, desenvolvido com Angular 19 e .NET Core WebAPI.
 
 ## 🚀 Funcionalidades Implementadas
 
@@ -10,7 +10,7 @@ Sistema web para gestão de despesas, receitas e performance de frota de caminh�
 - **Navegação**: Menu lateral com ícones Material Design
 
 ### ✅ Autenticação
-- **Login/Logout**: Sistema de autenticação com Firebase Auth
+- **Login/Logout**: Sistema de autenticação com JWT
 - **Proteção de Rotas**: Guards para proteger rotas que exigem autenticação
 - **Controle de Acesso**: Suporte para roles de usuário (admin/user)
 
@@ -28,7 +28,7 @@ Sistema web para gestão de despesas, receitas e performance de frota de caminh�
 ## 🛠️ Stack Tecnológica
 
 - **Frontend**: Angular 19 + Angular Material
-- **Backend**: Firebase (Firestore, Authentication, Functions, Hosting)
+- **Backend**: .NET Core WebAPI + JWT Authentication
 - **Styling**: SCSS + Angular Material Design
 - **State Management**: RxJS Observables
 - **Architecture**: Clean Architecture + Repository Pattern
@@ -93,37 +93,29 @@ src/app/
 ### Pré-requisitos
 - Node.js 18+ 
 - npm ou yarn
-- Conta Firebase
+- .NET Core 8.0+
+- API .NET Core rodando em `http://localhost:5139`
 
 ### 1. Instalação
 ```bash
 npm install
 ```
 
-### 2. Configuração do Firebase
-1. Crie um projeto no [Firebase Console](https://console.firebase.google.com/)
-2. Ative Authentication (Email/Password)
-3. Crie um banco Firestore
-4. Copie as credenciais do projeto
-5. Atualize `src/environments/environment.ts` com suas credenciais:
+### 2. Configuração da API
+1. Configure a API .NET Core para rodar na porta 5139
+2. Atualize `src/environments/environment.ts` se necessário:
 
 ```typescript
 export const environment = {
   production: false,
-  firebase: {
-    apiKey: "sua-api-key",
-    authDomain: "seu-projeto.firebaseapp.com",
-    projectId: "seu-projeto-id",
-    storageBucket: "seu-projeto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "seu-app-id"
-  }
+  apiUrl: 'http://localhost:5139/api'
 };
 ```
 
 ### 3. Executar em Desenvolvimento
 ```bash
-ng serve
+# Com proxy para API .NET Core
+npm run dev:dotnet
 ```
 
 A aplicação estará disponível em `http://localhost:4200`
@@ -139,11 +131,11 @@ ng build --configuration production
 Para testar a aplicação, você pode usar qualquer email e senha. O sistema está configurado para aceitar qualquer credencial durante o desenvolvimento.
 
 ### Produção
-1. Configure usuários no Firebase Authentication
-2. Implemente Cloud Functions para definir roles (admin/user)
-3. Configure regras de segurança do Firestore
+1. Configure usuários na API .NET Core
+2. Implemente roles (admin/user) no backend
+3. Configure JWT tokens para autenticação
 
-## 📊 Modelagem de Dados (Firestore)
+## 📊 Modelagem de Dados (API .NET Core)
 
 ### Coleção: `trucks`
 ```typescript
@@ -193,6 +185,16 @@ Para testar a aplicação, você pode usar qualquer email e senha. O sistema est
   updatedAt: Date
 }
 ```
+
+## 📚 Documentação
+
+Toda a documentação do projeto está organizada na pasta `docs/`:
+
+- **`docs/DOCUMENTACAO-DOTNET-API.md`** - Documentação completa da API .NET Core
+- **`docs/ENTIDADES-DOTNET-API.md`** - Entidades e modelos da API
+- **`docs/CONFIGURACAO-DOTNET-API.md`** - Configuração da integração
+- **`docs/README-DEPLOY-HOSTINGER.md`** - Instruções de deploy
+- **`docs/COMANDOS-RAPIDOS.md`** - Comandos úteis para desenvolvimento
 
 ## 🎯 Próximos Passos
 

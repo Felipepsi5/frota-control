@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angu
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -33,6 +33,7 @@ export interface FilterConfig {
 
 export interface FilterEvent {
   search: string;
+  searchTerm: string; // Adicionado para compatibilidade
   filters: { [key: string]: string };
 }
 
@@ -49,223 +50,8 @@ export interface FilterEvent {
     MatIconModule,
     MatExpansionModule
   ],
-  template: `
-    <div class="filters-container">
-      <!-- Filtros Principais (sempre visíveis) -->
-      <div class="main-filters">
-        <div class="search-field">
-          <input 
-            type="text"
-            [value]="searchValue" 
-            (input)="onInputChange($event)"
-            (keydown.enter)="onSearch()"
-            (keydown.escape)="clearSearch()"
-            (blur)="onBlur()"
-            placeholder="{{ config.searchPlaceholder || 'Digite para buscar...' }}"
-            autocomplete="off"
-            class="search-input">
-          <button 
-            mat-icon-button 
-            (click)="onSearch()"
-            class="search-button"
-            title="Buscar">
-            <mat-icon>search</mat-icon>
-          </button>
-        </div>
-        
-        <button 
-          mat-icon-button 
-          (click)="toggleAdvancedFilters()"
-          [class.expanded]="showAdvancedFilters"
-          title="Filtros avançados">
-          <mat-icon>tune</mat-icon>
-        </button>
-        
-        <button 
-          mat-icon-button 
-          (click)="clearAllFilters()"
-          title="Limpar filtros">
-          <mat-icon>clear</mat-icon>
-        </button>
-      </div>
-      
-      <!-- Filtros Avançados (expansível) -->
-      <mat-expansion-panel 
-        *ngIf="hasAdvancedFilters"
-        [expanded]="showAdvancedFilters"
-        (opened)="showAdvancedFilters = true"
-        (closed)="showAdvancedFilters = false"
-        class="advanced-filters-panel">
-        
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            <mat-icon>filter_list</mat-icon>
-            Filtros Avançados
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-        
-        <div class="advanced-filters-content">
-          <!-- Filtros de Seleção -->
-          <div class="filter-group" *ngIf="config.selectFilters?.length">
-            <div 
-              *ngFor="let filter of config.selectFilters" 
-              class="filter-item">
-              <mat-form-field appearance="outline">
-                <mat-label>{{ filter.label }}</mat-label>
-                <mat-select 
-                  [(value)]="filterValues[filter.key]"
-                  (selectionChange)="onFilterChange()">
-                  <mat-option value="">Todos</mat-option>
-                  <mat-option 
-                    *ngFor="let option of filter.options" 
-                    [value]="option.value">
-                    {{ option.label }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-          </div>
-          
-          <!-- Filtros de Data -->
-          <div class="filter-group" *ngIf="config.dateFilters?.length">
-            <div 
-              *ngFor="let filter of config.dateFilters" 
-              class="filter-item">
-              <mat-form-field appearance="outline">
-                <mat-label>{{ filter.label }}</mat-label>
-                <input 
-                  matInput 
-                  type="date"
-                  [(ngModel)]="filterValues[filter.key]"
-                  (change)="onFilterChange()">
-              </mat-form-field>
-            </div>
-          </div>
-          
-          <!-- Ações dos Filtros -->
-          <div class="filter-actions">
-            <button 
-              mat-raised-button 
-              color="primary" 
-              (click)="applyFilters()">
-              <mat-icon>check</mat-icon>
-              Aplicar Filtros
-            </button>
-            
-            <button 
-              mat-button 
-              (click)="clearFilters()">
-              <mat-icon>refresh</mat-icon>
-              Limpar
-            </button>
-          </div>
-        </div>
-      </mat-expansion-panel>
-    </div>
-  `,
-  styles: [`
-    .filters-container {
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    
-    .main-filters {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    
-    .search-field {
-      flex: 1;
-      min-width: 250px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .search-input {
-      flex: 1;
-      padding: 12px 16px;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    
-    .search-input:focus {
-      border-color: #1976d2;
-      box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
-    }
-    
-    .search-button {
-      flex-shrink: 0;
-    }
-    
-    .advanced-filters-panel {
-      margin-top: 16px;
-      box-shadow: none;
-      border: 1px solid #e0e0e0;
-    }
-    
-    .advanced-filters-panel .mat-expansion-panel-header {
-      padding: 0 16px;
-      height: 48px;
-    }
-    
-    .advanced-filters-content {
-      padding: 16px;
-    }
-    
-    .filter-group {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-    
-    .filter-item {
-      min-width: 200px;
-    }
-    
-    .filter-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-      padding-top: 16px;
-      border-top: 1px solid #e0e0e0;
-    }
-    
-    .filter-item mat-form-field {
-      width: 100%;
-    }
-    
-    @media (max-width: 768px) {
-      .main-filters {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      .search-field {
-        min-width: unset;
-      }
-      
-      .filter-group {
-        flex-direction: column;
-      }
-      
-      .filter-item {
-        min-width: unset;
-      }
-      
-      .filter-actions {
-        flex-direction: column;
-      }
-    }
-  `]
+  templateUrl: './table-filters.component.html',
+  styleUrls: ['./table-filters.component.scss']
 })
 export class TableFiltersComponent implements OnInit, OnDestroy {
   @Input() config: FilterConfig = {};
@@ -275,7 +61,6 @@ export class TableFiltersComponent implements OnInit, OnDestroy {
   filterValues: { [key: string]: string } = {};
   showAdvancedFilters = false;
   
-  private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
@@ -295,15 +80,7 @@ export class TableFiltersComponent implements OnInit, OnDestroy {
       });
     }
     
-    // Configurar debounce para pesquisa
-    this.searchSubject.pipe(
-      debounceTime(500),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(value => {
-      this.searchValue = value;
-      this.emitFilterChange();
-    });
+    // Removido debounce automático - busca apenas quando usuário solicitar
   }
 
   get hasAdvancedFilters(): boolean {
@@ -326,18 +103,15 @@ export class TableFiltersComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  onInputChange(event: any): void {
+  onSearchInputChange(event: any): void {
     this.searchValue = event.target.value;
-    // Não emitir imediatamente, apenas quando sair do campo ou após debounce
+    console.log('TableFiltersComponent.onSearchInputChange: Valor da busca alterado para:', this.searchValue);
+    // Não emitir automaticamente - apenas quando usuário clicar em buscar ou pressionar Enter
   }
 
   onSearch(): void {
+    console.log('TableFiltersComponent.onSearch: Botão buscar clicado');
     // Aplicar filtro quando pressionar Enter ou clicar no botão
-    this.emitFilterChange();
-  }
-
-  onBlur(): void {
-    // Emitir filtro quando sair do campo
     this.emitFilterChange();
   }
 
@@ -351,6 +125,8 @@ export class TableFiltersComponent implements OnInit, OnDestroy {
   }
 
   applyFilters(): void {
+    console.log('TableFiltersComponent.applyFilters: Aplicando filtros avançados');
+    console.log('TableFiltersComponent.applyFilters: Valores dos filtros:', this.filterValues);
     this.emitFilterChange();
   }
 
@@ -381,9 +157,13 @@ export class TableFiltersComponent implements OnInit, OnDestroy {
   }
 
   private emitFilterChange(): void {
-    this.filterChange.emit({
+    const filterEvent = {
       search: this.searchValue,
+      searchTerm: this.searchValue, // Adicionado para compatibilidade
       filters: { ...this.filterValues }
-    });
+    };
+    
+    console.log('TableFiltersComponent.emitFilterChange: Emitindo evento de filtro:', filterEvent);
+    this.filterChange.emit(filterEvent);
   }
 }

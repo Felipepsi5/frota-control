@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: '/api', // Usa proxy do Nginx
+  apiUrl: '/api', // Em produção, usar proxy do Nginx para API .NET Core
   firebase: {
     apiKey: "your-prod-api-key-here",
     authDomain: "your-prod-project.firebaseapp.com",

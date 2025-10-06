@@ -1,59 +1,14 @@
 # Dependências
-node_modules
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Build outputs
-dist
-.angular
-.ng_build
+# Arquivos de build
+dist/
+.angular/
 
-# Arquivos de desenvolvimento
-*.log
-*.tmp
-*.temp
-
-# IDE e editores
-.vscode
-.idea
-*.swp
-*.swo
-*~
-
-# Sistema operacional
-.DS_Store
-Thumbs.db
-
-# Git
-.git
-.gitignore
-
-# Docker
-docker-compose*.yml
-docker-manage.sh
-deploy-hostinger.sh
-.dockerignore
-
-# Documentação
-README*.md
-*.md
-
-# Configurações
-.env
-env.example
-
-# Logs e backups
-logs/
-backups/
-
-# Testes
-coverage
-.nyc_output
-*.spec.ts
-*.test.ts
-
-# Configurações locais
+# Arquivos de ambiente
 .env
 .env.local
 .env.development.local
@@ -70,52 +25,43 @@ pids
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
-coverage
+# Coverage directory usado por ferramentas como istanbul
+coverage/
+*.lcov
 
-# Dependency directories
-jspm_packages/
+# Arquivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Optional npm cache directory
-.npm
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Optional REPL history
-.node_repl_history
+# Git
+.git/
+.gitignore
 
-# Output of 'npm pack'
-*.tgz
+# Docker
+Dockerfile
+.dockerignore
 
-# Yarn Integrity file
-.yarn-integrity
+# Documentação
+README.md
+*.md
 
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
+# Arquivos de teste
+e2e/
+*.spec.ts
+*.spec.js
 
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# Arquivos específicos do projeto
-ssl/
-logs/
+# Arquivos temporários
+.tmp/
+.temp/

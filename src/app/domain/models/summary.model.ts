@@ -1,6 +1,6 @@
 export interface MonthlySummary {
-  id: string; // truckId_year_month (ex: QOL7533_2025_07)
-  truckId: string;
+  id: string; // truckId_year_month (ex: guid_2025_07)
+  truckId: string; // GUID do caminhão
   year: number;
   month: number;
   totalRevenue: number;

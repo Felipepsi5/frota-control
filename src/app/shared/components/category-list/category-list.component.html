@@ -1,0 +1,24 @@
+<mat-card class="category-card">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>{{ getHeaderIcon() }}</mat-icon>
+      {{ getHeaderTitle() }}
+    </mat-card-title>
+    <mat-card-subtitle>
+      {{ categories.length }} categoria(s) disponível(is)
+    </mat-card-subtitle>
+  </mat-card-header>
+  
+  <mat-card-content>
+    <mat-list>
+      <mat-list-item *ngFor="let category of categories" class="category-item">
+        <mat-icon matListItemIcon class="category-icon">{{ category.icon }}</mat-icon>
+        <div matListItemTitle class="category-name">{{ category.name }}</div>
+        <div matListItemLine class="category-description">{{ category.description }}</div>
+        <mat-chip matListItemMeta class="category-chip">
+          {{ category.type === 'expense' ? 'Despesa' : 'Receita' }}
+        </mat-chip>
+      </mat-list-item>
+    </mat-list>
+  </mat-card-content>
+</mat-card>

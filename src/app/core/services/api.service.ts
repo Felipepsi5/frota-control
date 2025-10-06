@@ -18,11 +18,25 @@ export class ApiService {
     if (params) {
       Object.keys(params).forEach(key => {
         if (params[key] !== null && params[key] !== undefined) {
-          httpParams = httpParams.set(key, params[key].toString());
+          // Se o valor é um objeto (como Filters), expandir para parâmetros aninhados
+          if (typeof params[key] === 'object' && !Array.isArray(params[key])) {
+            console.log(`ApiService.get: Expandindo objeto ${key}:`, params[key]);
+            Object.keys(params[key]).forEach(nestedKey => {
+              if (params[key][nestedKey] !== null && params[key][nestedKey] !== undefined && params[key][nestedKey] !== '') {
+                const paramName = `${key}.${nestedKey}`;
+                httpParams = httpParams.set(paramName, params[key][nestedKey].toString());
+                console.log(`ApiService.get: Parâmetro aninhado ${paramName}:`, params[key][nestedKey]);
+              }
+            });
+          } else {
+            console.log(`ApiService.get: Parâmetro simples ${key}:`, params[key]);
+            httpParams = httpParams.set(key, params[key].toString());
+          }
         }
       });
     }
 
+    console.log('ApiService.get: Parâmetros finais:', httpParams.toString());
     return this.http.get<T>(`${this.baseUrl}${endpoint}`, { params: httpParams });
   }
 

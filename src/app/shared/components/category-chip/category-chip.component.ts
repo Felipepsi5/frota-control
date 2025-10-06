@@ -12,40 +12,8 @@ import { CategoryService, Category } from '../../core/services/category.service'
     MatChipsModule,
     MatIconModule
   ],
-  template: `
-    <mat-chip-set>
-      <mat-chip 
-        [class]="getChipClass()"
-        [matTooltip]="getTooltip()"
-        matTooltipPosition="above">
-        <mat-icon *ngIf="showIcon" class="chip-icon">{{ getIcon() }}</mat-icon>
-        {{ categoryName }}
-      </mat-chip>
-    </mat-chip-set>
-  `,
-  styles: [`
-    .chip-icon {
-      font-size: 16px;
-      height: 16px;
-      width: 16px;
-      margin-right: 4px;
-    }
-    
-    .expense-chip {
-      background-color: #ffebee;
-      color: #c62828;
-    }
-    
-    .revenue-chip {
-      background-color: #e8f5e8;
-      color: #2e7d32;
-    }
-    
-    mat-chip {
-      font-size: 12px;
-      min-height: 24px;
-    }
-  `]
+  templateUrl: './category-chip.component.html',
+  styleUrls: ['./category-chip.component.scss']
 })
 export class CategoryChipComponent {
   @Input() categoryName: string = '';

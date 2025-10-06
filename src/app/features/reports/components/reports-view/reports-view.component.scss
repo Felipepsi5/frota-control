@@ -1,0 +1,465 @@
+.reports-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header-card, .filters-card {
+  margin-bottom: 24px;
+}
+
+.reports-tabs {
+  margin-bottom: 24px;
+}
+
+.report-card {
+  margin-bottom: 24px;
+}
+
+.filters-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.report-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin: 24px 0;
+}
+
+.loading-container p {
+  margin-top: 16px;
+  color: #666;
+}
+
+/* Summary Cards */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 8px;
+  background: #f5f5f5;
+  transition: transform 0.2s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.summary-card.revenue {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  color: white;
+}
+
+.summary-card.expense {
+  background: linear-gradient(135deg, #f44336, #ef5350);
+  color: white;
+}
+
+.summary-card.balance, .summary-card.netIncome {
+  background: linear-gradient(135deg, #2196f3, #42a5f5);
+  color: white;
+}
+
+.summary-card.balance.positive, .summary-card.netIncome.positive {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+}
+
+.summary-card.balance.negative, .summary-card.netIncome.negative {
+  background: linear-gradient(135deg, #f44336, #ef5350);
+}
+
+.summary-card.margin {
+  background: linear-gradient(135deg, #ff9800, #ffb74d);
+  color: white;
+}
+
+.summary-card.entries {
+  background: linear-gradient(135deg, #9c27b0, #ba68c8);
+  color: white;
+}
+
+.summary-card.average {
+  background: linear-gradient(135deg, #607d8b, #90a4ae);
+  color: white;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.card-label {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Stats Items */
+.stat-item, .fuel-stats, .trend-stats, .profit-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  min-width: 150px;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Tables */
+.performance-table, .efficiency-table, .trends-table, .profitability-table {
+  margin-top: 24px;
+}
+
+.performance-table table, .efficiency-table table, .trends-table table, .profitability-table table {
+  width: 100%;
+}
+
+.positive {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.negative {
+  color: #f44336;
+  font-weight: bold;
+}
+
+/* Cost Analysis */
+.cost-breakdown {
+  margin-top: 24px;
+}
+
+.cost-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cost-category {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.category-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 200px;
+}
+
+.category-name {
+  font-weight: bold;
+  color: #333;
+}
+
+.category-percentage {
+  color: #666;
+  font-size: 14px;
+}
+
+.category-bar {
+  flex: 1;
+  height: 20px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 16px;
+}
+
+.category-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #66bb6a);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.category-value {
+  min-width: 100px;
+  text-align: right;
+  font-weight: bold;
+  color: #333;
+}
+
+.cost-summary {
+  margin-top: 24px;
+}
+
+.summary-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+/* Yearly Comparison */
+.yearly-comparison {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.year-data {
+  flex: 1;
+  min-width: 300px;
+}
+
+.comparison-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 50%;
+}
+
+.comparison-arrow mat-icon {
+  font-size: 32px;
+  color: #666;
+}
+
+.year-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.year-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.year-card.revenue {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  color: white;
+}
+
+.year-card.expense {
+  background: linear-gradient(135deg, #f44336, #ef5350);
+  color: white;
+}
+
+.year-card.netIncome {
+  background: linear-gradient(135deg, #2196f3, #42a5f5);
+  color: white;
+}
+
+.year-card.margin {
+  background: linear-gradient(135deg, #ff9800, #ffb74d);
+  color: white;
+}
+
+.growth-indicators {
+  margin-top: 24px;
+}
+
+.growth-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.growth-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 8px;
+  background: #f5f5f5;
+}
+
+.growth-card.positive {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  color: white;
+}
+
+.growth-card.negative {
+  background: linear-gradient(135deg, #f44336, #ef5350);
+  color: white;
+}
+
+.growth-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.growth-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.growth-label {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Report Details */
+.report-details {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.report-details h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+}
+
+.report-details p {
+  margin: 8px 0;
+  color: #666;
+}
+
+.actions-card {
+  margin-top: 24px;
+}
+
+.actions-container {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+mat-card-header {
+  padding-bottom: 16px;
+}
+
+mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .reports-container {
+    padding: 16px;
+  }
+  
+  .filters-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-item, .fuel-stats, .trend-stats, .profit-stats {
+    flex-direction: column;
+  }
+  
+  .actions-container {
+    flex-direction: column;
+  }
+
+  .yearly-comparison {
+    flex-direction: column;
+  }
+
+  .comparison-arrow {
+    transform: rotate(90deg);
+  }
+
+  .cost-category {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .category-info {
+    min-width: auto;
+  }
+
+  .category-bar {
+    margin: 8px 0;
+  }
+
+  .year-cards, .growth-cards, .summary-items {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-card {
+    padding: 16px;
+  }
+
+  .card-value {
+    font-size: 20px;
+  }
+
+  .stat-number {
+    font-size: 20px;
+  }
+}

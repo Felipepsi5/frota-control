@@ -6,39 +6,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   selector: 'app-loading-spinner',
   standalone: true,
   imports: [CommonModule, MatProgressSpinnerModule],
-  template: `
-    <div class="loading-container" [class.overlay]="overlay">
-      <mat-spinner [diameter]="diameter"></mat-spinner>
-      <p *ngIf="message" class="loading-message">{{ message }}</p>
-    </div>
-  `,
-  styles: [`
-    .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px;
-      text-align: center;
-    }
-
-    .loading-container.overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(255, 255, 255, 0.8);
-      z-index: 9999;
-      padding: 0;
-    }
-
-    .loading-message {
-      margin-top: 16px;
-      color: #666;
-      font-size: 14px;
-    }
-  `]
+  templateUrl: './loading-spinner.component.html',
+  styleUrls: ['./loading-spinner.component.scss']
 })
 export class LoadingSpinnerComponent {
   @Input() diameter: number = 50;

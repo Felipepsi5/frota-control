@@ -1,0 +1,785 @@
+<div class="reports-container">
+  <mat-card class="header-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>assessment</mat-icon>
+        Relatórios Financeiros
+      </mat-card-title>
+      <mat-card-subtitle>
+        Visualize e analise os dados da sua frota
+      </mat-card-subtitle>
+    </mat-card-header>
+  </mat-card>
+
+  <!-- Filtros Globais -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>filter_list</mat-icon>
+        Filtros
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="dateForm" class="filters-container">
+        <mat-form-field appearance="outline">
+          <mat-label>Data Início</mat-label>
+          <input matInput [matDatepicker]="startPicker" formControlName="startDate" placeholder="dd/mm/aaaa">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Data Fim</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="endDate" placeholder="dd/mm/aaaa">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Caminhão</mat-label>
+          <mat-select [(value)]="selectedTruckId">
+            <mat-option [value]="null">Todos os Caminhões</mat-option>
+            <mat-option *ngFor="let truck of trucks" [value]="truck.id">
+              {{ truck.licensePlate }} - {{ truck.model }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading Spinner -->
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+    <p>Gerando relatório...</p>
+  </div>
+
+  <mat-tab-group class="reports-tabs">
+    <!-- Resumo Financeiro -->
+    <mat-tab label="Resumo Financeiro">
+      <ng-template matTabContent>
+        <mat-card class="report-card">
+          <mat-card-header>
+            <mat-card-title>Resumo Financeiro</mat-card-title>
+            <mat-card-subtitle>Visão geral das receitas e despesas</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="report-actions">
+              <button mat-raised-button color="primary" (click)="generateFinancialSummary()" [disabled]="loading">
+                <mat-icon>refresh</mat-icon>
+                Gerar Relatório
+              </button>
+              
+              <button mat-stroked-button color="primary" (click)="exportCurrentReport('summary')" [disabled]="!financialSummary">
+                <mat-icon>download</mat-icon>
+                Exportar Excel
+              </button>
+            </div>
+            
+            <div class="report-content" *ngIf="financialSummary">
+              <div class="summary-cards">
+                <div class="summary-card revenue">
+                  <mat-icon>trending_up</mat-icon>
+                  <div class="card-content">
+                    <div class="card-value">{{ formatCurrency(financialSummary.totalRevenue) }}</div>
+                    <div class="card-label">Total Receitas</div>
+                  </div>
+                </div>
+                
+                <div class="summary-card expense">
+                  <mat-icon>trending_down</mat-icon>
+                  <div class="card-content">
+                    <div class="card-value">{{ formatCurrency(financialSummary.totalExpenses) }}</div>
+                    <div class="card-label">Total Despesas</div>
+                  </div>
+                </div>
+                
+                <div class="summary-card balance" [class.positive]="financialSummary.netIncome > 0" [class.negative]="financialSummary.netIncome < 0">
+                  <mat-icon>{{ financialSummary.netIncome > 0 ? 'account_balance' : 'account_balance_wallet' }}</mat-icon>
+                  <div class="card-content">
+                    <div class="card-value">{{ formatCurrency(financialSummary.netIncome) }}</div>
+                    <div class="card-label">Lucro Líquido</div>
+                  </div>
+                </div>
+
+                <div class="summary-card margin">
+                  <mat-icon>percent</mat-icon>
+                  <div class="card-content">
+                    <div class="card-value">{{ formatPercentage(financialSummary.profitMargin) }}</div>
+                    <div class="card-label">Margem de Lucro</div>
+                  </div>
+                </div>
+
+                <div class="summary-card entries">
+                  <mat-icon>receipt</mat-icon>
+                  <div class="card-content">
+                    <div class="card-value">{{ formatNumber(financialSummary.totalEntries) }}</div>
+                    <div class="card-label">Total Lançamentos</div>
+                  </div>
+                </div>
+
+                <div class="summary-card average">
+                  <mat-icon>monetization_on</mat-icon>
+                  <div class="card-content">
+                    <div class="card-value">{{ formatCurrency(financialSummary.averageEntryValue) }}</div>
+                    <div class="card-label">Valor Médio</div>
+                  </div>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+              
+              <div class="report-details">
+                <h3>Detalhes do Período</h3>
+                <p><strong>Período:</strong> {{ financialSummary.period }}</p>
+                <p><strong>Caminhões:</strong> {{ formatNumber(financialSummary.truckCount) }}</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+    
+    <!-- Performance por Caminhão -->
+    <mat-tab label="Performance por Caminhão">
+      <ng-template matTabContent>
+        <mat-card class="report-card">
+          <mat-card-header>
+            <mat-card-title>Performance por Caminhão</mat-card-title>
+            <mat-card-subtitle>Análise de performance individual dos veículos</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="report-actions">
+              <button mat-raised-button color="primary" (click)="generateTruckPerformance()" [disabled]="loading">
+                <mat-icon>refresh</mat-icon>
+                Gerar Relatório
+              </button>
+              
+              <button mat-stroked-button color="primary" (click)="exportCurrentReport('truck-performance')" [disabled]="!truckPerformance">
+                <mat-icon>download</mat-icon>
+                Exportar Excel
+              </button>
+            </div>
+            
+            <div class="report-content" *ngIf="truckPerformance">
+              <div class="summary-stats" *ngIf="truckPerformance.summary">
+                <div class="stat-item">
+                  <mat-icon>directions_car</mat-icon>
+                  <div class="stat-content">
+                    <div class="stat-number">{{ formatNumber(truckPerformance.summary.totalTrucks) }}</div>
+                    <div class="stat-label">Total Caminhões</div>
+                  </div>
+                </div>
+                
+                <div class="stat-item">
+                  <mat-icon>trending_up</mat-icon>
+                  <div class="stat-content">
+                    <div class="stat-number">{{ formatCurrency(truckPerformance.summary.totalRevenue) }}</div>
+                    <div class="stat-label">Receita Total</div>
+                  </div>
+                </div>
+                
+                <div class="stat-item">
+                  <mat-icon>trending_down</mat-icon>
+                  <div class="stat-content">
+                    <div class="stat-number">{{ formatCurrency(truckPerformance.summary.totalExpenses) }}</div>
+                    <div class="stat-label">Despesa Total</div>
+                  </div>
+                </div>
+
+                <div class="stat-item">
+                  <mat-icon>percent</mat-icon>
+                  <div class="stat-content">
+                    <div class="stat-number">{{ formatPercentage(truckPerformance.summary.averageProfitMargin) }}</div>
+                    <div class="stat-label">Margem Média</div>
+                  </div>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="performance-table">
+                <h3>Performance Individual</h3>
+                <table mat-table [dataSource]="truckPerformance.trucks" class="mat-elevation-z2">
+                  <ng-container matColumnDef="licensePlate">
+                    <th mat-header-cell *matHeaderCellDef>Placa</th>
+                    <td mat-cell *matCellDef="let truck">{{ truck.licensePlate }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="model">
+                    <th mat-header-cell *matHeaderCellDef>Modelo</th>
+                    <td mat-cell *matCellDef="let truck">{{ truck.model }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="revenue">
+                    <th mat-header-cell *matHeaderCellDef>Receita</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatCurrency(truck.totalRevenue) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="expenses">
+                    <th mat-header-cell *matHeaderCellDef>Despesas</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatCurrency(truck.totalExpenses) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="netIncome">
+                    <th mat-header-cell *matHeaderCellDef>Lucro</th>
+                    <td mat-cell *matCellDef="let truck" [class.positive]="truck.netIncome > 0" [class.negative]="truck.netIncome < 0">
+                      {{ formatCurrency(truck.netIncome) }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="profitMargin">
+                    <th mat-header-cell *matHeaderCellDef>Margem</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatPercentage(truck.profitMargin) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="fuelEfficiency">
+                    <th mat-header-cell *matHeaderCellDef>Eficiência</th>
+                    <td mat-cell *matCellDef="let truck">{{ truck.fuelEfficiency }} km/l</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="['licensePlate', 'model', 'revenue', 'expenses', 'netIncome', 'profitMargin', 'fuelEfficiency']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['licensePlate', 'model', 'revenue', 'expenses', 'netIncome', 'profitMargin', 'fuelEfficiency'];"></tr>
+                </table>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+    
+    <!-- Análise de Custos -->
+    <mat-tab label="Análise de Custos">
+      <ng-template matTabContent>
+        <mat-card class="report-card">
+          <mat-card-header>
+            <mat-card-title>Análise de Custos</mat-card-title>
+            <mat-card-subtitle>Breakdown de despesas por categoria</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="report-actions">
+              <button mat-raised-button color="primary" (click)="generateCostAnalysis()" [disabled]="loading">
+                <mat-icon>refresh</mat-icon>
+                Gerar Relatório
+              </button>
+              
+              <button mat-stroked-button color="primary" (click)="exportCurrentReport('cost-analysis')" [disabled]="!costAnalysis">
+                <mat-icon>download</mat-icon>
+                Exportar Excel
+              </button>
+            </div>
+            
+            <div class="report-content" *ngIf="costAnalysis">
+              <div class="cost-breakdown">
+                <h3>Breakdown de Custos</h3>
+                <div class="cost-categories">
+                  <div class="cost-category" *ngFor="let category of getCostCategories()">
+                    <div class="category-info">
+                      <span class="category-name">{{ category.name }}</span>
+                      <span class="category-percentage">{{ formatPercentage(category.percentage) }}</span>
+                    </div>
+                    <div class="category-bar">
+                      <div class="category-fill" [style.width.%]="category.percentage"></div>
+                    </div>
+                    <div class="category-value">{{ formatCurrency(category.value) }}</div>
+                  </div>
+                </div>
+            </div>
+            
+              <mat-divider></mat-divider>
+
+              <div class="cost-summary">
+                <h3>Resumo de Custos</h3>
+                <div class="summary-items">
+                  <div class="summary-item">
+                    <mat-icon>account_balance_wallet</mat-icon>
+                    <span>Total de Despesas: {{ formatCurrency(costAnalysis.summary.totalExpenses) }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <mat-icon>calendar_month</mat-icon>
+                    <span>Média Mensal: {{ formatCurrency(costAnalysis.summary.averageMonthlyExpenses) }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <mat-icon>trending_up</mat-icon>
+                    <span>Maior Categoria: {{ costAnalysis.summary.highestExpenseCategory }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <mat-icon>percent</mat-icon>
+                    <span>Crescimento: {{ formatPercentage(costAnalysis.summary.expenseGrowth) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+
+    <!-- Eficiência de Combustível -->
+    <mat-tab label="Eficiência de Combustível">
+      <ng-template matTabContent>
+        <mat-card class="report-card">
+          <mat-card-header>
+            <mat-card-title>Eficiência de Combustível</mat-card-title>
+            <mat-card-subtitle>Análise de consumo e custos de combustível</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="report-actions">
+              <button mat-raised-button color="primary" (click)="generateFuelEfficiency()" [disabled]="loading">
+                <mat-icon>refresh</mat-icon>
+                Gerar Relatório
+              </button>
+              
+              <button mat-stroked-button color="primary" (click)="exportCurrentReport('fuel-efficiency')" [disabled]="!fuelEfficiency">
+                <mat-icon>download</mat-icon>
+                Exportar Excel
+              </button>
+            </div>
+            
+            <div class="report-content" *ngIf="fuelEfficiency">
+              <div class="fuel-summary" *ngIf="fuelEfficiency.summary">
+                <div class="fuel-stats">
+                <div class="stat-item">
+                    <mat-icon>local_gas_station</mat-icon>
+                  <div class="stat-content">
+                      <div class="stat-number">{{ formatNumber(fuelEfficiency.summary.totalLiters) }} L</div>
+                      <div class="stat-label">Total Litros</div>
+                  </div>
+                </div>
+                
+                <div class="stat-item">
+                    <mat-icon>straighten</mat-icon>
+                  <div class="stat-content">
+                      <div class="stat-number">{{ formatNumber(fuelEfficiency.summary.totalKm) }} km</div>
+                      <div class="stat-label">Total KM</div>
+                  </div>
+                </div>
+                
+                <div class="stat-item">
+                    <mat-icon>speed</mat-icon>
+                  <div class="stat-content">
+                      <div class="stat-number">{{ fuelEfficiency.summary.averageEfficiency }} km/l</div>
+                      <div class="stat-label">Eficiência Média</div>
+                  </div>
+                </div>
+
+                  <div class="stat-item">
+                    <mat-icon>monetization_on</mat-icon>
+                    <div class="stat-content">
+                      <div class="stat-number">{{ formatCurrency(fuelEfficiency.summary.totalFuelCost) }}</div>
+                      <div class="stat-label">Custo Total</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="efficiency-table">
+                <h3>Eficiência por Caminhão</h3>
+                <table mat-table [dataSource]="fuelEfficiency.truckEfficiency" class="mat-elevation-z2">
+                  <ng-container matColumnDef="licensePlate">
+                    <th mat-header-cell *matHeaderCellDef>Placa</th>
+                    <td mat-cell *matCellDef="let truck">{{ truck.licensePlate }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="totalLiters">
+                    <th mat-header-cell *matHeaderCellDef>Litros</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatNumber(truck.totalLiters) }} L</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="totalKm">
+                    <th mat-header-cell *matHeaderCellDef>KM</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatNumber(truck.totalKm) }} km</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="fuelEfficiency">
+                    <th mat-header-cell *matHeaderCellDef>Eficiência</th>
+                    <td mat-cell *matCellDef="let truck">{{ truck.fuelEfficiency }} km/l</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="fuelCost">
+                    <th mat-header-cell *matHeaderCellDef>Custo</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatCurrency(truck.fuelCost) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="fuelCostPerKm">
+                    <th mat-header-cell *matHeaderCellDef>Custo/KM</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatCurrency(truck.fuelCostPerKm) }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="['licensePlate', 'totalLiters', 'totalKm', 'fuelEfficiency', 'fuelCost', 'fuelCostPerKm']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['licensePlate', 'totalLiters', 'totalKm', 'fuelEfficiency', 'fuelCost', 'fuelCostPerKm'];"></tr>
+                </table>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+    
+    <!-- Tendências Mensais -->
+    <mat-tab label="Tendências Mensais">
+      <ng-template matTabContent>
+        <mat-card class="report-card">
+          <mat-card-header>
+            <mat-card-title>Tendências Mensais</mat-card-title>
+            <mat-card-subtitle>Evolução dos indicadores ao longo do tempo</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="report-actions">
+              <button mat-raised-button color="primary" (click)="generateMonthlyTrends()" [disabled]="loading">
+                <mat-icon>refresh</mat-icon>
+                Gerar Relatório
+              </button>
+              
+              <button mat-stroked-button color="primary" (click)="exportCurrentReport('monthly-trends')" [disabled]="!monthlyTrends">
+                <mat-icon>download</mat-icon>
+                Exportar Excel
+              </button>
+            </div>
+            
+            <div class="report-content" *ngIf="monthlyTrends">
+              <div class="trends-summary" *ngIf="monthlyTrends.summary">
+                <div class="trend-stats">
+                  <div class="stat-item">
+                    <mat-icon>trending_up</mat-icon>
+                    <div class="stat-content">
+                      <div class="stat-number">{{ formatCurrency(monthlyTrends.summary.averageMonthlyRevenue) }}</div>
+                      <div class="stat-label">Receita Média</div>
+                    </div>
+                  </div>
+                  
+                  <div class="stat-item">
+                    <mat-icon>trending_down</mat-icon>
+                    <div class="stat-content">
+                      <div class="stat-number">{{ formatCurrency(monthlyTrends.summary.averageMonthlyExpenses) }}</div>
+                      <div class="stat-label">Despesa Média</div>
+                    </div>
+                  </div>
+                  
+                  <div class="stat-item">
+                    <mat-icon>percent</mat-icon>
+                    <div class="stat-content">
+                      <div class="stat-number">{{ formatPercentage(monthlyTrends.summary.revenueGrowth) }}</div>
+                      <div class="stat-label">Crescimento Receita</div>
+                    </div>
+                  </div>
+
+                  <div class="stat-item">
+                    <mat-icon>percent</mat-icon>
+                    <div class="stat-content">
+                      <div class="stat-number">{{ formatPercentage(monthlyTrends.summary.expenseGrowth) }}</div>
+                      <div class="stat-label">Crescimento Despesa</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="trends-table">
+                <h3>Dados Mensais</h3>
+                <table mat-table [dataSource]="monthlyTrends.monthlyData" class="mat-elevation-z2">
+                  <ng-container matColumnDef="month">
+                    <th mat-header-cell *matHeaderCellDef>Mês</th>
+                    <td mat-cell *matCellDef="let month">{{ month.month }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="revenue">
+                    <th mat-header-cell *matHeaderCellDef>Receita</th>
+                    <td mat-cell *matCellDef="let month">{{ formatCurrency(month.revenue) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="expenses">
+                    <th mat-header-cell *matHeaderCellDef>Despesas</th>
+                    <td mat-cell *matCellDef="let month">{{ formatCurrency(month.expenses) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="netIncome">
+                    <th mat-header-cell *matHeaderCellDef>Lucro</th>
+                    <td mat-cell *matCellDef="let month" [class.positive]="month.netIncome > 0" [class.negative]="month.netIncome < 0">
+                      {{ formatCurrency(month.netIncome) }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="profitMargin">
+                    <th mat-header-cell *matHeaderCellDef>Margem</th>
+                    <td mat-cell *matCellDef="let month">{{ formatPercentage(month.profitMargin) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="entryCount">
+                    <th mat-header-cell *matHeaderCellDef>Lançamentos</th>
+                    <td mat-cell *matCellDef="let month">{{ formatNumber(month.entryCount) }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="['month', 'revenue', 'expenses', 'netIncome', 'profitMargin', 'entryCount']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['month', 'revenue', 'expenses', 'netIncome', 'profitMargin', 'entryCount'];"></tr>
+                </table>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+
+    <!-- Lucratividade -->
+    <mat-tab label="Lucratividade">
+      <ng-template matTabContent>
+        <mat-card class="report-card">
+          <mat-card-header>
+            <mat-card-title>Lucratividade</mat-card-title>
+            <mat-card-subtitle>Análise de ROI e margens de lucro</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="report-actions">
+              <button mat-raised-button color="primary" (click)="generateProfitability()" [disabled]="loading">
+                <mat-icon>refresh</mat-icon>
+                Gerar Relatório
+              </button>
+              
+              <button mat-stroked-button color="primary" (click)="exportCurrentReport('profitability')" [disabled]="!profitability">
+                <mat-icon>download</mat-icon>
+                Exportar Excel
+              </button>
+            </div>
+            
+            <div class="report-content" *ngIf="profitability">
+              <div class="profitability-summary" *ngIf="profitability.summary">
+                <div class="profit-stats">
+                  <div class="stat-item">
+                    <mat-icon>trending_up</mat-icon>
+                    <div class="stat-content">
+                      <div class="stat-number">{{ formatCurrency(profitability.summary.totalRevenue) }}</div>
+                      <div class="stat-label">Receita Total</div>
+                    </div>
+            </div>
+            
+                  <div class="stat-item">
+                    <mat-icon>trending_down</mat-icon>
+                    <div class="stat-content">
+                      <div class="stat-number">{{ formatCurrency(profitability.summary.totalExpenses) }}</div>
+                      <div class="stat-label">Despesa Total</div>
+                    </div>
+                  </div>
+                  
+                  <div class="stat-item">
+                    <mat-icon>account_balance</mat-icon>
+                    <div class="stat-content">
+                      <div class="stat-number">{{ formatCurrency(profitability.summary.totalNetIncome) }}</div>
+                      <div class="stat-label">Lucro Total</div>
+                    </div>
+                  </div>
+
+                  <div class="stat-item">
+                    <mat-icon>percent</mat-icon>
+                    <div class="stat-content">
+                      <div class="stat-number">{{ formatPercentage(profitability.summary.averageROI) }}</div>
+                      <div class="stat-label">ROI Médio</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="profitability-table">
+                <h3>Lucratividade por Caminhão</h3>
+                <table mat-table [dataSource]="profitability.truckProfitability" class="mat-elevation-z2">
+                  <ng-container matColumnDef="licensePlate">
+                    <th mat-header-cell *matHeaderCellDef>Placa</th>
+                    <td mat-cell *matCellDef="let truck">{{ truck.licensePlate }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="revenue">
+                    <th mat-header-cell *matHeaderCellDef>Receita</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatCurrency(truck.revenue) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="expenses">
+                    <th mat-header-cell *matHeaderCellDef>Despesas</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatCurrency(truck.expenses) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="netIncome">
+                    <th mat-header-cell *matHeaderCellDef>Lucro</th>
+                    <td mat-cell *matCellDef="let truck" [class.positive]="truck.netIncome > 0" [class.negative]="truck.netIncome < 0">
+                      {{ formatCurrency(truck.netIncome) }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="profitMargin">
+                    <th mat-header-cell *matHeaderCellDef>Margem</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatPercentage(truck.profitMargin) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="roi">
+                    <th mat-header-cell *matHeaderCellDef>ROI</th>
+                    <td mat-cell *matCellDef="let truck">{{ formatPercentage(truck.roi) }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="['licensePlate', 'revenue', 'expenses', 'netIncome', 'profitMargin', 'roi']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['licensePlate', 'revenue', 'expenses', 'netIncome', 'profitMargin', 'roi'];"></tr>
+                </table>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+
+    <!-- Comparação Anual -->
+    <mat-tab label="Comparação Anual">
+      <ng-template matTabContent>
+        <mat-card class="report-card">
+          <mat-card-header>
+            <mat-card-title>Comparação Anual</mat-card-title>
+            <mat-card-subtitle>Comparação entre anos consecutivos</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="report-actions">
+              <button mat-raised-button color="primary" (click)="generateYearlyComparison()" [disabled]="loading">
+                <mat-icon>refresh</mat-icon>
+                Gerar Relatório
+              </button>
+              
+              <button mat-stroked-button color="primary" (click)="exportCurrentReport('yearly-comparison')" [disabled]="!yearlyComparison">
+                <mat-icon>download</mat-icon>
+                Exportar Excel
+              </button>
+            </div>
+            
+            <div class="report-content" *ngIf="yearlyComparison">
+              <div class="yearly-comparison">
+                <div class="year-data current-year">
+                  <h3>{{ yearlyComparison.currentYear.year }}</h3>
+                  <div class="year-cards">
+                    <div class="year-card revenue">
+                      <mat-icon>trending_up</mat-icon>
+                      <div class="card-content">
+                        <div class="card-value">{{ formatCurrency(yearlyComparison.currentYear.revenue) }}</div>
+                        <div class="card-label">Receita</div>
+                      </div>
+                    </div>
+                    
+                    <div class="year-card expense">
+                      <mat-icon>trending_down</mat-icon>
+                      <div class="card-content">
+                        <div class="card-value">{{ formatCurrency(yearlyComparison.currentYear.expenses) }}</div>
+                        <div class="card-label">Despesas</div>
+                      </div>
+                    </div>
+                    
+                    <div class="year-card netIncome">
+                      <mat-icon>account_balance</mat-icon>
+                      <div class="card-content">
+                        <div class="card-value">{{ formatCurrency(yearlyComparison.currentYear.netIncome) }}</div>
+                        <div class="card-label">Lucro</div>
+                      </div>
+                    </div>
+                    
+                    <div class="year-card margin">
+                      <mat-icon>percent</mat-icon>
+                      <div class="card-content">
+                        <div class="card-value">{{ formatPercentage(yearlyComparison.currentYear.profitMargin) }}</div>
+                        <div class="card-label">Margem</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="comparison-arrow">
+                  <mat-icon>compare_arrows</mat-icon>
+                </div>
+
+                <div class="year-data previous-year">
+                  <h3>{{ yearlyComparison.previousYear.year }}</h3>
+                  <div class="year-cards">
+                    <div class="year-card revenue">
+                      <mat-icon>trending_up</mat-icon>
+                      <div class="card-content">
+                        <div class="card-value">{{ formatCurrency(yearlyComparison.previousYear.revenue) }}</div>
+                        <div class="card-label">Receita</div>
+                      </div>
+                    </div>
+                    
+                    <div class="year-card expense">
+                      <mat-icon>trending_down</mat-icon>
+                      <div class="card-content">
+                        <div class="card-value">{{ formatCurrency(yearlyComparison.previousYear.expenses) }}</div>
+                        <div class="card-label">Despesas</div>
+                      </div>
+                    </div>
+                    
+                    <div class="year-card netIncome">
+                      <mat-icon>account_balance</mat-icon>
+                      <div class="card-content">
+                        <div class="card-value">{{ formatCurrency(yearlyComparison.previousYear.netIncome) }}</div>
+                        <div class="card-label">Lucro</div>
+                      </div>
+                    </div>
+                    
+                    <div class="year-card margin">
+                      <mat-icon>percent</mat-icon>
+                      <div class="card-content">
+                        <div class="card-value">{{ formatPercentage(yearlyComparison.previousYear.profitMargin) }}</div>
+                        <div class="card-label">Margem</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="growth-indicators">
+                <h3>Indicadores de Crescimento</h3>
+                <div class="growth-cards">
+                  <div class="growth-card" [class.positive]="yearlyComparison.comparison.revenueGrowth > 0" [class.negative]="yearlyComparison.comparison.revenueGrowth < 0">
+                    <mat-icon>{{ yearlyComparison.comparison.revenueGrowth > 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+                    <div class="growth-content">
+                      <div class="growth-value">{{ formatPercentage(yearlyComparison.comparison.revenueGrowth) }}</div>
+                      <div class="growth-label">Crescimento Receita</div>
+                    </div>
+                  </div>
+                  
+                  <div class="growth-card" [class.positive]="yearlyComparison.comparison.netIncomeGrowth > 0" [class.negative]="yearlyComparison.comparison.netIncomeGrowth < 0">
+                    <mat-icon>{{ yearlyComparison.comparison.netIncomeGrowth > 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+                    <div class="growth-content">
+                      <div class="growth-value">{{ formatPercentage(yearlyComparison.comparison.netIncomeGrowth) }}</div>
+                      <div class="growth-label">Crescimento Lucro</div>
+                    </div>
+                  </div>
+                  
+                  <div class="growth-card" [class.positive]="yearlyComparison.comparison.profitMarginGrowth > 0" [class.negative]="yearlyComparison.comparison.profitMarginGrowth < 0">
+                    <mat-icon>{{ yearlyComparison.comparison.profitMarginGrowth > 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+                    <div class="growth-content">
+                      <div class="growth-value">{{ formatPercentage(yearlyComparison.comparison.profitMarginGrowth) }}</div>
+                      <div class="growth-label">Crescimento Margem</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
+
+  <mat-card class="actions-card">
+    <mat-card-content>
+      <div class="actions-container">
+        <button mat-raised-button color="primary" (click)="exportAllReports()">
+          <mat-icon>download</mat-icon>
+          Exportar Todos os Relatórios
+        </button>
+        
+        <button mat-raised-button color="accent" (click)="scheduleReport()">
+          <mat-icon>schedule</mat-icon>
+          Agendar Relatório
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

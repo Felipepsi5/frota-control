@@ -1,61 +1,122 @@
 export interface FinancialEntry {
   id: string;
-  truckId: string; // Referência à coleção trucks
-  date: Date;
-  entryType: 'expense' | 'revenue';
-  category: string; // ex: "Abastecimento", "Manutenção", "Pagamento Viagem"
-  amount: number;
-  litersFilled?: number; // Opcional
-  odometerReading?: number; // Opcional
-  createdUserId: string; // ID do usuário autenticado que criou o registro
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface CreateFinancialEntryRequest {
   truckId: string;
+  licensePlate: string; // Adicionado conforme documentação
   date: Date;
   entryType: 'expense' | 'revenue';
   category: string;
   amount: number;
   litersFilled?: number;
   odometerReading?: number;
+  description?: string; // Adicionado conforme documentação
+  createdUserId: string;
+  createdUserName: string; // Adicionado conforme documentação
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateFinancialEntryRequest {
+  truckId: string;
+  date: string; // Alterado para string (ISO 8601) conforme documentação
+  entryType: 'expense' | 'revenue';
+  category: string;
+  amount: number;
+  litersFilled?: number;
+  odometerReading?: number;
+  description?: string; // Adicionado conforme documentação
 }
 
 export interface UpdateFinancialEntryRequest {
-  date?: Date;
+  date?: string; // ISO 8601 format
   entryType?: 'expense' | 'revenue';
   category?: string;
   amount?: number;
   litersFilled?: number;
   odometerReading?: number;
+  description?: string | null; // Adicionado conforme documentação
+  descriptionProvided?: boolean; // Flag para indicar se description foi explicitamente fornecido
 }
 
 export interface FinancialEntryFilters {
   truckId?: string;
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: string; // ISO 8601 format
+  endDate?: string; // ISO 8601 format
   entryType?: 'expense' | 'revenue';
   category?: string;
+  search?: string; // Busca por descrição ou categoria
+}
+
+// Interfaces para paginação conforme nova API
+export interface FinancialEntryPaginationParams {
+  page: number;
+  limit: number;
+  truckId?: string;
+  startDate?: string;
+  endDate?: string;
+  entryType?: 'expense' | 'revenue';
+  category?: string;
+  search?: string;
+}
+
+export interface FinancialEntryPaginationResponse {
+  data: FinancialEntryResponse[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+}
+
+// Resposta completa da API (FinancialEntryResponse)
+export interface FinancialEntryResponse {
+  id: string;
+  truckId: string;
+  licensePlate: string;
+  date: string; // ISO 8601 format
+  entryType: 'expense' | 'revenue';
+  category: string;
+  amount: number;
+  litersFilled?: number;
+  odometerReading?: number;
+  description?: string;
+  createdUserId: string;
+  createdUserName: string;
+  createdAt: string; // ISO 8601 format
+  updatedAt: string; // ISO 8601 format
+}
+
+// Resposta simplificada da API (FinancialEntryListResponse)
+export interface FinancialEntryListResponse {
+  id: string;
+  truckId: string;
+  licensePlate: string;
+  date: string; // ISO 8601 format
+  entryType: 'expense' | 'revenue';
+  category: string;
+  amount: number;
+  description?: string;
 }
 
 export const FINANCIAL_CATEGORIES = {
   expense: [
-    'Abastecimento',
+    'Combustível',
     'Manutenção',
-    'Pneus',
+    'Pedágio',
+    'Estacionamento',
+    'Peças',
     'Seguro',
     'IPVA',
     'Licenciamento',
-    'Pedágio',
-    'Estacionamento',
-    'Multas',
     'Outros'
   ],
   revenue: [
-    'Pagamento Viagem',
     'Frete',
-    'Adiantamento',
+    'Entrega',
+    'Aluguel',
+    'Venda',
     'Outros'
   ]
 } as const;

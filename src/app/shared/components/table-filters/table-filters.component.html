@@ -1,0 +1,111 @@
+<div class="filters-container">
+  <!-- Filtros Principais (sempre visíveis) -->
+  <div class="main-filters">
+    <div class="search-field">
+      <input 
+        type="text"
+        [value]="searchValue" 
+        (input)="onSearchInputChange($event)"
+        (keydown.enter)="onSearch()"
+        (keydown.escape)="clearSearch()"
+        placeholder="{{ config.searchPlaceholder || 'Digite para buscar...' }}"
+        autocomplete="off"
+        class="search-input">
+      <button 
+        mat-icon-button 
+        (click)="onSearch()"
+        class="search-button"
+        title="Buscar">
+        <mat-icon>search</mat-icon>
+      </button>
+    </div>
+    
+    <button 
+      mat-icon-button 
+      (click)="toggleAdvancedFilters()"
+      [class.expanded]="showAdvancedFilters"
+      title="Filtros avançados">
+      <mat-icon>tune</mat-icon>
+    </button>
+    
+    <button 
+      mat-icon-button 
+      (click)="clearAllFilters()"
+      title="Limpar filtros">
+      <mat-icon>clear</mat-icon>
+    </button>
+  </div>
+  
+  <!-- Filtros Avançados (expansível) -->
+  <mat-expansion-panel 
+    *ngIf="hasAdvancedFilters"
+    [expanded]="showAdvancedFilters"
+    (opened)="showAdvancedFilters = true"
+    (closed)="showAdvancedFilters = false"
+    class="advanced-filters-panel">
+    
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <mat-icon>filter_list</mat-icon>
+        Filtros Avançados
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    
+    <div class="advanced-filters-content">
+      <!-- Filtros de Seleção -->
+      <div class="filter-group" *ngIf="config.selectFilters?.length">
+        <div 
+          *ngFor="let filter of config.selectFilters" 
+          class="filter-item">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ filter.label }}</mat-label>
+            <mat-select 
+              [(value)]="filterValues[filter.key]"
+              (selectionChange)="onFilterChange()">
+              <mat-option value="">Todos</mat-option>
+              <mat-option 
+                *ngFor="let option of filter.options" 
+                [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      
+      <!-- Filtros de Data -->
+      <div class="filter-group" *ngIf="config.dateFilters?.length">
+        <div 
+          *ngFor="let filter of config.dateFilters" 
+          class="filter-item">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ filter.label }}</mat-label>
+            <input 
+              matInput 
+              type="date"
+              [(ngModel)]="filterValues[filter.key]"
+              (change)="onFilterChange()">
+          </mat-form-field>
+        </div>
+      </div>
+      
+      <!-- Ações dos Filtros -->
+      <div class="filter-actions">
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="applyFilters()">
+          <mat-icon>check</mat-icon>
+          Aplicar Filtros
+        </button>
+        
+        <button 
+          mat-button 
+          (click)="clearFilters()">
+          <mat-icon>refresh</mat-icon>
+          Limpar
+        </button>
+      </div>
+    </div>
+  </mat-expansion-panel>
+</div>

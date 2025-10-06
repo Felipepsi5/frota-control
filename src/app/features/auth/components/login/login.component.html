@@ -50,6 +50,17 @@
           <span *ngIf="!loading">Entrar</span>
           <span *ngIf="loading">Entrando...</span>
         </button>
+
+        <!-- Botão de teste temporário -->
+        <button 
+          mat-stroked-button 
+          color="accent" 
+          type="button"
+          class="full-width"
+          (click)="testNavigation()"
+          style="margin-top: 10px;">
+          🧪 Testar Navegação Direta
+        </button>
       </form>
     </mat-card-content>
 

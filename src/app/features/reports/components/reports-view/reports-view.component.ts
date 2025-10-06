@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +13,23 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatChipsModule } from '@angular/material/chips';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { FinancialReportsService, 
+         FinancialSummaryReport, 
+         TruckPerformanceReport, 
+         CostAnalysisData, 
+         FuelEfficiencyReport, 
+         MonthlyTrendsReport, 
+         ProfitabilityReport, 
+         YearlyComparisonReport } from '../../services/financial-reports.service';
+import { ExportService } from '../../services/export.service';
+import { TruckService } from '../../../truck-management/services/truck.service';
+import { Truck } from '../../../../domain/models/truck.model';
 
 @Component({
   selector: 'app-reports-view',
@@ -30,437 +47,330 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatInputModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatSelectModule
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    MatDividerModule,
+    MatChipsModule,
+    ReactiveFormsModule
   ],
-  template: `
-    <div class="reports-container">
-      <mat-card class="header-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>assessment</mat-icon>
-            Relatórios
-          </mat-card-title>
-          <mat-card-subtitle>
-            Visualize e analise os dados da sua frota
-          </mat-card-subtitle>
-        </mat-card-header>
-      </mat-card>
-
-      <mat-tab-group class="reports-tabs">
-        <mat-tab label="Resumo Financeiro">
-          <ng-template matTabContent>
-            <mat-card class="report-card">
-              <mat-card-header>
-                <mat-card-title>Resumo Financeiro</mat-card-title>
-                <mat-card-subtitle>Visão geral das receitas e despesas</mat-card-subtitle>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="filters-container">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Período</mat-label>
-                    <mat-select [(value)]="selectedPeriod">
-                      <mat-option value="current-month">Mês Atual</mat-option>
-                      <mat-option value="last-month">Mês Anterior</mat-option>
-                      <mat-option value="current-year">Ano Atual</mat-option>
-                      <mat-option value="custom">Personalizado</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  
-                  <button mat-raised-button color="primary" (click)="generateFinancialReport()">
-                    <mat-icon>refresh</mat-icon>
-                    Gerar Relatório
-                  </button>
-                </div>
-                
-                <div class="report-content" *ngIf="financialReport">
-                  <div class="summary-cards">
-                    <div class="summary-card revenue">
-                      <mat-icon>trending_up</mat-icon>
-                      <div class="card-content">
-                        <div class="card-value">{{ financialReport.totalRevenue | currency:'BRL' }}</div>
-                        <div class="card-label">Total Receitas</div>
-                      </div>
-                    </div>
-                    
-                    <div class="summary-card expense">
-                      <mat-icon>trending_down</mat-icon>
-                      <div class="card-content">
-                        <div class="card-value">{{ financialReport.totalExpense | currency:'BRL' }}</div>
-                        <div class="card-label">Total Despesas</div>
-                      </div>
-                    </div>
-                    
-                    <div class="summary-card balance" [class.positive]="financialReport.balance > 0" [class.negative]="financialReport.balance < 0">
-                      <mat-icon>{{ financialReport.balance > 0 ? 'account_balance' : 'account_balance_wallet' }}</mat-icon>
-                      <div class="card-content">
-                        <div class="card-value">{{ financialReport.balance | currency:'BRL' }}</div>
-                        <div class="card-label">Saldo</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </mat-card-content>
-            </mat-card>
-          </ng-template>
-        </mat-tab>
-        
-        <mat-tab label="Relatório de Caminhões">
-          <ng-template matTabContent>
-            <mat-card class="report-card">
-              <mat-card-header>
-                <mat-card-title>Relatório de Caminhões</mat-card-title>
-                <mat-card-subtitle>Status e performance dos veículos</mat-card-subtitle>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="filters-container">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Status</mat-label>
-                    <mat-select [(value)]="selectedTruckStatus">
-                      <mat-option value="all">Todos</mat-option>
-                      <mat-option value="active">Ativos</mat-option>
-                      <mat-option value="inactive">Inativos</mat-option>
-                      <mat-option value="maintenance">Em Manutenção</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  
-                  <button mat-raised-button color="primary" (click)="generateTruckReport()">
-                    <mat-icon>refresh</mat-icon>
-                    Gerar Relatório
-                  </button>
-                </div>
-                
-                <div class="report-content" *ngIf="truckReport">
-                  <div class="truck-stats">
-                    <div class="stat-item">
-                      <mat-icon>directions_car</mat-icon>
-                      <div class="stat-content">
-                        <div class="stat-number">{{ truckReport.totalTrucks }}</div>
-                        <div class="stat-label">Total de Caminhões</div>
-                      </div>
-                    </div>
-                    
-                    <div class="stat-item">
-                      <mat-icon>check_circle</mat-icon>
-                      <div class="stat-content">
-                        <div class="stat-number">{{ truckReport.activeTrucks }}</div>
-                        <div class="stat-label">Ativos</div>
-                      </div>
-                    </div>
-                    
-                    <div class="stat-item">
-                      <mat-icon>build</mat-icon>
-                      <div class="stat-content">
-                        <div class="stat-number">{{ truckReport.maintenanceTrucks }}</div>
-                        <div class="stat-label">Em Manutenção</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </mat-card-content>
-            </mat-card>
-          </ng-template>
-        </mat-tab>
-        
-        <mat-tab label="Relatório de Categorias">
-          <ng-template matTabContent>
-            <mat-card class="report-card">
-              <mat-card-header>
-                <mat-card-title>Relatório de Categorias</mat-card-title>
-                <mat-card-subtitle>Análise por categoria de despesas e receitas</mat-card-subtitle>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="filters-container">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Tipo</mat-label>
-                    <mat-select [(value)]="selectedCategoryType">
-                      <mat-option value="all">Todas</mat-option>
-                      <mat-option value="expense">Despesas</mat-option>
-                      <mat-option value="revenue">Receitas</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  
-                  <button mat-raised-button color="primary" (click)="generateCategoryReport()">
-                    <mat-icon>refresh</mat-icon>
-                    Gerar Relatório
-                  </button>
-                </div>
-                
-                <div class="report-content" *ngIf="categoryReport">
-                  <div class="category-chart-placeholder">
-                    <mat-icon>pie_chart</mat-icon>
-                    <p>Gráfico de categorias será implementado aqui</p>
-                  </div>
-                </div>
-              </mat-card-content>
-            </mat-card>
-          </ng-template>
-        </mat-tab>
-      </mat-tab-group>
-
-      <mat-card class="actions-card">
-        <mat-card-content>
-          <div class="actions-container">
-            <button mat-raised-button color="primary" (click)="exportAllReports()">
-              <mat-icon>download</mat-icon>
-              Exportar Todos os Relatórios
-            </button>
-            
-            <button mat-raised-button color="accent" (click)="scheduleReport()">
-              <mat-icon>schedule</mat-icon>
-              Agendar Relatório
-            </button>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  `,
-  styles: [`
-    .reports-container {
-      padding: 24px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .header-card {
-      margin-bottom: 24px;
-    }
-    
-    .reports-tabs {
-      margin-bottom: 24px;
-    }
-    
-    .report-card {
-      margin-bottom: 24px;
-    }
-    
-    .filters-container {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-    
-    .summary-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 16px;
-      margin-top: 24px;
-    }
-    
-    .summary-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 20px;
-      border-radius: 8px;
-      background: #f5f5f5;
-    }
-    
-    .summary-card.revenue {
-      background: linear-gradient(135deg, #4caf50, #66bb6a);
-      color: white;
-    }
-    
-    .summary-card.expense {
-      background: linear-gradient(135deg, #f44336, #ef5350);
-      color: white;
-    }
-    
-    .summary-card.balance {
-      background: linear-gradient(135deg, #2196f3, #42a5f5);
-      color: white;
-    }
-    
-    .summary-card.balance.positive {
-      background: linear-gradient(135deg, #4caf50, #66bb6a);
-    }
-    
-    .summary-card.balance.negative {
-      background: linear-gradient(135deg, #f44336, #ef5350);
-    }
-    
-    .card-content {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .card-value {
-      font-size: 24px;
-      font-weight: bold;
-    }
-    
-    .card-label {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-    
-    .truck-stats {
-      display: flex;
-      gap: 24px;
-      margin-top: 24px;
-      flex-wrap: wrap;
-    }
-    
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px;
-      background: #f5f5f5;
-      border-radius: 8px;
-      min-width: 150px;
-    }
-    
-    .stat-content {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .stat-number {
-      font-size: 24px;
-      font-weight: bold;
-      color: #333;
-    }
-    
-    .stat-label {
-      font-size: 14px;
-      color: #666;
-    }
-    
-    .category-chart-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px;
-      background: #f5f5f5;
-      border-radius: 8px;
-      margin-top: 24px;
-    }
-    
-    .category-chart-placeholder mat-icon {
-      font-size: 48px;
-      color: #666;
-      margin-bottom: 16px;
-    }
-    
-    .actions-card {
-      margin-top: 24px;
-    }
-    
-    .actions-container {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-    }
-    
-    mat-card-header {
-      padding-bottom: 16px;
-    }
-    
-    mat-card-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    @media (max-width: 768px) {
-      .filters-container {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      .summary-cards {
-        grid-template-columns: 1fr;
-      }
-      
-      .truck-stats {
-        flex-direction: column;
-      }
-      
-      .actions-container {
-        flex-direction: column;
-      }
-    }
-  `]
+  templateUrl: './reports-view.component.html',
+  styleUrls: ['./reports-view.component.scss']
 })
-export class ReportsViewComponent implements OnInit {
-  selectedPeriod = 'current-month';
-  selectedTruckStatus = 'all';
-  selectedCategoryType = 'all';
+export class ReportsViewComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   
-  financialReport: any = null;
-  truckReport: any = null;
-  categoryReport: any = null;
+  // Form
+  dateForm!: FormGroup;
+  
+  // Data
+  trucks: Truck[] = [];
+  selectedTruckId: string | null = null;
+  
+  // Loading state
+  loading = false;
+  
+  // Reports data
+  financialSummary: FinancialSummaryReport | null = null;
+  truckPerformance: TruckPerformanceReport | null = null;
+  costAnalysis: CostAnalysisData | null = null;
+  fuelEfficiency: FuelEfficiencyReport | null = null;
+  monthlyTrends: MonthlyTrendsReport | null = null;
+  profitability: ProfitabilityReport | null = null;
+  yearlyComparison: YearlyComparisonReport | null = null;
 
-  constructor(private snackBar: MatSnackBar) {}
+  constructor(
+    private fb: FormBuilder,
+    private financialReportsService: FinancialReportsService,
+    private exportService: ExportService,
+    private truckService: TruckService,
+    private snackBar: MatSnackBar
+  ) {
+    this.initializeForm();
+  }
 
   ngOnInit(): void {
-    // Inicializar dados se necessário
+    this.loadTrucks();
+    this.setDefaultDateRange();
   }
 
-  generateFinancialReport(): void {
-    // Simular geração de relatório financeiro
-    this.financialReport = {
-      totalRevenue: 150000,
-      totalExpense: 120000,
-      balance: 30000
-    };
-    
-    this.snackBar.open('Relatório financeiro gerado com sucesso!', 'Fechar', {
-      duration: 3000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-      panelClass: ['success-snackbar']
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private initializeForm(): void {
+    this.dateForm = this.fb.group({
+      startDate: ['', Validators.required],
+      endDate: ['', Validators.required]
     });
   }
 
-  generateTruckReport(): void {
-    // Simular geração de relatório de caminhões
-    this.truckReport = {
-      totalTrucks: 15,
-      activeTrucks: 12,
-      maintenanceTrucks: 3
-    };
+  private setDefaultDateRange(): void {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(endDate.getMonth() - 1);
     
-    this.snackBar.open('Relatório de caminhões gerado com sucesso!', 'Fechar', {
-      duration: 3000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-      panelClass: ['success-snackbar']
+    this.dateForm.patchValue({
+      startDate,
+      endDate
     });
   }
 
-  generateCategoryReport(): void {
-    // Simular geração de relatório de categorias
-    this.categoryReport = {
-      categories: []
-    };
+  private loadTrucks(): void {
+    this.truckService.getAllTrucks()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (trucks) => {
+          this.trucks = trucks || [];
+        },
+        error: (error) => {
+          console.error('Erro ao carregar caminhões:', error);
+          this.snackBar.open('Erro ao carregar caminhões', 'Fechar', { duration: 3000 });
+        }
+      });
+  }
+
+  private getReportParams() {
+    const startDate = this.dateForm.get('startDate')?.value;
+    const endDate = this.dateForm.get('endDate')?.value;
     
-    this.snackBar.open('Relatório de categorias gerado com sucesso!', 'Fechar', {
-      duration: 3000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-      panelClass: ['success-snackbar']
-    });
+    if (!startDate || !endDate) {
+      this.snackBar.open('Por favor, selecione as datas', 'Fechar', { duration: 3000 });
+      return null;
+    }
+
+    return {
+      startDate,
+      endDate,
+      truckId: this.selectedTruckId || undefined
+    };
+  }
+
+  generateFinancialSummary(): void {
+    const params = this.getReportParams();
+    if (!params) return;
+
+    this.loading = true;
+    this.financialReportsService.getFinancialSummary(params.startDate, params.endDate, params.truckId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (report) => {
+          this.financialSummary = report;
+          this.loading = false;
+          this.snackBar.open('Relatório de resumo financeiro gerado com sucesso', 'Fechar', { duration: 3000 });
+        },
+        error: (error) => {
+          console.error('Erro ao gerar relatório de resumo financeiro:', error);
+          this.loading = false;
+          this.snackBar.open('Erro ao gerar relatório', 'Fechar', { duration: 3000 });
+        }
+      });
+  }
+
+  generateTruckPerformance(): void {
+    const params = this.getReportParams();
+    if (!params) return;
+
+    this.loading = true;
+    this.financialReportsService.getTruckPerformance(params.startDate, params.endDate, params.truckId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (report) => {
+          this.truckPerformance = report;
+          this.loading = false;
+          this.snackBar.open('Relatório de performance gerado com sucesso', 'Fechar', { duration: 3000 });
+        },
+        error: (error) => {
+          console.error('Erro ao gerar relatório de performance:', error);
+          this.loading = false;
+          this.snackBar.open('Erro ao gerar relatório', 'Fechar', { duration: 3000 });
+        }
+      });
+  }
+
+  generateCostAnalysis(): void {
+    const params = this.getReportParams();
+    if (!params) return;
+
+    this.loading = true;
+    this.financialReportsService.getCostAnalysis(params.startDate, params.endDate, params.truckId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (report) => {
+          this.costAnalysis = report;
+          this.loading = false;
+          this.snackBar.open('Relatório de análise de custos gerado com sucesso', 'Fechar', { duration: 3000 });
+        },
+        error: (error) => {
+          console.error('Erro ao gerar relatório de análise de custos:', error);
+          this.loading = false;
+          this.snackBar.open('Erro ao gerar relatório', 'Fechar', { duration: 3000 });
+        }
+      });
+  }
+
+  generateFuelEfficiency(): void {
+    const params = this.getReportParams();
+    if (!params) return;
+
+    this.loading = true;
+    this.financialReportsService.getFuelEfficiency(params.startDate, params.endDate, params.truckId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (report) => {
+          this.fuelEfficiency = report;
+          this.loading = false;
+          this.snackBar.open('Relatório de eficiência de combustível gerado com sucesso', 'Fechar', { duration: 3000 });
+        },
+        error: (error) => {
+          console.error('Erro ao gerar relatório de eficiência:', error);
+          this.loading = false;
+          this.snackBar.open('Erro ao gerar relatório', 'Fechar', { duration: 3000 });
+        }
+      });
+  }
+
+  generateMonthlyTrends(): void {
+    const params = this.getReportParams();
+    if (!params) return;
+
+    this.loading = true;
+    this.financialReportsService.getMonthlyTrends(params.startDate, params.endDate, params.truckId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (report) => {
+          this.monthlyTrends = report;
+          this.loading = false;
+          this.snackBar.open('Relatório de tendências mensais gerado com sucesso', 'Fechar', { duration: 3000 });
+        },
+        error: (error) => {
+          console.error('Erro ao gerar relatório de tendências:', error);
+          this.loading = false;
+          this.snackBar.open('Erro ao gerar relatório', 'Fechar', { duration: 3000 });
+        }
+      });
+  }
+
+  generateProfitability(): void {
+    const params = this.getReportParams();
+    if (!params) return;
+
+    this.loading = true;
+    this.financialReportsService.getProfitability(params.startDate, params.endDate, params.truckId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (report) => {
+          this.profitability = report;
+          this.loading = false;
+          this.snackBar.open('Relatório de lucratividade gerado com sucesso', 'Fechar', { duration: 3000 });
+        },
+        error: (error) => {
+          console.error('Erro ao gerar relatório de lucratividade:', error);
+          this.loading = false;
+          this.snackBar.open('Erro ao gerar relatório', 'Fechar', { duration: 3000 });
+        }
+      });
+  }
+
+  generateYearlyComparison(): void {
+    const params = this.getReportParams();
+    if (!params) return;
+
+    this.loading = true;
+    this.financialReportsService.getYearlyComparison(params.startDate, params.endDate, params.truckId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (report) => {
+          this.yearlyComparison = report;
+          this.loading = false;
+          this.snackBar.open('Relatório de comparação anual gerado com sucesso', 'Fechar', { duration: 3000 });
+        },
+        error: (error) => {
+          console.error('Erro ao gerar relatório de comparação anual:', error);
+          this.loading = false;
+          this.snackBar.open('Erro ao gerar relatório', 'Fechar', { duration: 3000 });
+        }
+      });
+  }
+
+  exportCurrentReport(reportType: string): void {
+    const params = this.getReportParams();
+    if (!params) return;
+
+    const reports = {
+      financialSummary: reportType === 'summary' ? this.financialSummary : undefined,
+      truckPerformance: reportType === 'truck-performance' ? this.truckPerformance : undefined,
+      costAnalysis: reportType === 'cost-analysis' ? this.costAnalysis : undefined,
+      fuelEfficiency: reportType === 'fuel-efficiency' ? this.fuelEfficiency : undefined,
+      monthlyTrends: reportType === 'monthly-trends' ? this.monthlyTrends : undefined,
+      profitability: reportType === 'profitability' ? this.profitability : undefined,
+      yearlyComparison: reportType === 'yearly-comparison' ? this.yearlyComparison : undefined
+    };
+
+    const period = {
+      startDate: params.startDate,
+      endDate: params.endDate
+    };
+
+    const selectedTruck = this.trucks.find(truck => truck.id === this.selectedTruckId);
+    const truckFilter = selectedTruck ? `${selectedTruck.licensePlate} - ${selectedTruck.model}` : undefined;
+
+    this.exportService.exportReportToExcel(reportType, reports, period, truckFilter);
+    this.snackBar.open('Relatório exportado com sucesso', 'Fechar', { duration: 3000 });
   }
 
   exportAllReports(): void {
-    this.snackBar.open('Todos os relatórios foram exportados!', 'Fechar', {
-      duration: 3000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-      panelClass: ['success-snackbar']
-    });
+    const params = this.getReportParams();
+    if (!params) return;
+
+    const reports = {
+      financialSummary: this.financialSummary || undefined,
+      truckPerformance: this.truckPerformance || undefined,
+      costAnalysis: this.costAnalysis || undefined,
+      fuelEfficiency: this.fuelEfficiency || undefined,
+      monthlyTrends: this.monthlyTrends || undefined,
+      profitability: this.profitability || undefined,
+      yearlyComparison: this.yearlyComparison || undefined
+    };
+
+    const period = {
+      startDate: params.startDate,
+      endDate: params.endDate
+    };
+
+    const selectedTruck = this.trucks.find(truck => truck.id === this.selectedTruckId);
+    const truckFilter = selectedTruck ? `${selectedTruck.licensePlate} - ${selectedTruck.model}` : undefined;
+
+    this.exportService.exportAllReportsToExcel(reports, period, truckFilter);
+    this.snackBar.open('Todos os relatórios foram exportados com sucesso', 'Fechar', { duration: 3000 });
   }
 
   scheduleReport(): void {
-    this.snackBar.open('Funcionalidade de agendamento será implementada em breve!', 'Fechar', {
-      duration: 3000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-      panelClass: ['info-snackbar']
-    });
+    this.snackBar.open('Funcionalidade de agendamento em desenvolvimento', 'Fechar', { duration: 3000 });
+  }
+
+  getCostCategories() {
+    if (!this.costAnalysis?.expenseBreakdown) return [];
+    
+    return Object.entries(this.costAnalysis.expenseBreakdown).map(([name, value]) => ({
+      name,
+      value,
+      percentage: this.costAnalysis!.expensePercentages[name] || 0
+    }));
+  }
+
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  }
+
+  formatNumber(value: number): string {
+    return new Intl.NumberFormat('pt-BR').format(value);
+  }
+
+  formatPercentage(value: number): string {
+    return `${value.toFixed(2)}%`;
   }
 }

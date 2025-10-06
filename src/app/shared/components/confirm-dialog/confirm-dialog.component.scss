@@ -1,0 +1,45 @@
+.confirm-dialog {
+  min-width: 300px;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dialog-header mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.dialog-header mat-icon.warning {
+  color: #ff9800;
+}
+
+.dialog-header mat-icon.danger {
+  color: #f44336;
+}
+
+.dialog-header mat-icon.info {
+  color: #2196f3;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+mat-dialog-content p {
+  margin: 0;
+  color: #666;
+  line-height: 1.5;
+}
+
+mat-dialog-actions {
+  margin-top: 24px;
+  gap: 8px;
+}

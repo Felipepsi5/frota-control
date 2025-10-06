@@ -1,11 +1,14 @@
 {
   "/api/*": {
-    "target": "http://json-server:3000",
+    "target": "http://localhost:5139",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug",
     "pathRewrite": {
-      "^/api": ""
+      "^/api": "/api"
+    },
+    "headers": {
+      "Connection": "keep-alive"
     }
   }
 }
